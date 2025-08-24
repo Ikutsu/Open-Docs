@@ -1,14 +1,27 @@
-# 提示词 API
+# Prompt API
 
-Prompt API 允许你使用 Kotlin DSL 创建结构良好的提示词，针对不同的 LLM 提供方执行这些提示词，并以不同格式处理响应。
+Prompt API 提供了一个全面的工具包，用于在生产应用程序中与大型语言模型 (LLM) 进行交互。它提供：
+
+- **Kotlin DSL** 用于创建具有类型安全的结构化提示词
+- **多提供方支持**，涵盖 OpenAI、Anthropic、Google 及其他 LLM 提供方
+- **生产特性**，如重试逻辑、错误处理和超时配置
+- **多模态功能**，用于处理文本、图像、音频和文档
+
+## 架构概览
+
+Prompt API 由三个主要层组成：
+
+1.  **LLM 客户端** - 连接特定提供方（OpenAI、Anthropic 等）的低级接口
+2.  **装饰器** - 可选的包装器，添加重试逻辑等功能
+3.  **提示词执行器** - 管理客户端生命周期并简化使用的高级抽象
 
 ## 创建提示词
 
 Prompt API 使用 Kotlin DSL 创建提示词。它支持以下消息类型：
 
-- `system`: 设置 LLM 的上下文和指令。
-- `user`: 表示用户输入。
-- `assistant`: 表示 LLM 响应。
+-   `system`: 设置 LLM 的上下文和指令。
+-   `user`: 表示用户输入。
+-   `assistant`: 表示 LLM 响应。
 
 这是一个简单提示词的示例：
 
@@ -35,9 +48,9 @@ val prompt = prompt("prompt_name", LLMParams()) {
 
 ## 执行提示词
 
-要使用特定的 LLM 执行提示词，你需要完成以下步骤：
+要使用特定的 LLM 执行提示词，你需要执行以下操作：
 
-1. 创建相应的 LLM 客户端，用于处理你的应用程序与 LLM 提供方之间的连接。例如：
+1.  创建相应的 LLM 客户端，用于处理你的应用程序与 LLM 提供方之间的连接。例如：
 <!--- INCLUDE
 import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
 const val apiKey = "apikey"
@@ -48,7 +61,7 @@ val client = OpenAILLMClient(apiKey)
 ```
 <!--- KNIT example-prompt-api-02.kt -->
 
-2. 调用 `execute` 方法，将提示词和 LLM 作为实参。
+2.  调用 `execute` 方法，将提示词和 LLM 作为实参。
 <!--- INCLUDE
 import ai.koog.agents.example.examplePromptApi01.prompt
 import ai.koog.agents.example.examplePromptApi02.client
@@ -73,12 +86,12 @@ val response = client.execute(
 
 以下 LLM 客户端可用：
 
-* [OpenAILLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-openai-client/ai.koog.prompt.executor.clients.openai/-open-a-i-l-l-m-client/index.html)
-* [AnthropicLLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-anthropic-client/ai.koog.prompt.executor.clients.anthropic/-anthropic-l-l-m-client/index.html)
-* [GoogleLLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-google-client/ai.koog.prompt.executor.clients.google/-google-l-l-m-client/index.html)
-* [OpenRouterLLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-openrouter-client/ai.koog.prompt.executor.clients.openrouter/-open-router-l-l-m-client/index.html)
-* [OllamaClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-ollama-client/ai.koog.prompt.executor.ollama.client/-ollama-client/index.html)
-* [BedrockLLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-bedrock-client/ai.koog.prompt.executor.clients.bedrock/-bedrock-l-l-m-client/index.html) (仅限 JVM)
+*   [OpenAILLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-openai-client/ai.koog.prompt.executor.clients.openai/-open-a-i-l-l-m-client/index.html)
+*   [AnthropicLLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-anthropic-client/ai.koog.prompt.executor.clients.anthropic/-anthropic-l-l-m-client/index.html)
+*   [GoogleLLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-google-client/ai.koog.prompt.executor.clients.google/-google-l-l-m-client/index.html)
+*   [OpenRouterLLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-openrouter-client/ai.koog.prompt.executor.clients.openrouter/-open-router-l-l-m-client/index.html)
+*   [OllamaClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-ollama-client/ai.koog.prompt.executor.ollama.client/-ollama-client/index.html)
+*   [BedrockLLMClient](https://api.koog.ai/prompt/prompt-executor/prompt-executor-clients/prompt-executor-bedrock-client/ai.koog.prompt.executor.clients.bedrock/-bedrock-l-l-m-client/index.html) (仅限 JVM)
 
 这是一个使用 Prompt API 的简单示例：
 
@@ -120,6 +133,275 @@ fun main() {
 ```
 <!--- KNIT example-prompt-api-04.kt -->
 
+## 重试功能
+
+在使用 LLM 提供方时，你可能会遇到瞬时错误，例如速率限制或服务暂时不可用。`RetryingLLMClient` 装饰器为任何 LLM 客户端添加了自动重试逻辑。
+
+### 基本用法
+
+将任何现有客户端封装为具有重试功能：
+
+<!--- INCLUDE
+import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.clients.retry.RetryingLLMClient
+import ai.koog.prompt.dsl.prompt
+import kotlinx.coroutines.runBlocking
+
+fun main() {
+    runBlocking {
+        val apiKey = System.getenv("OPENAI_API_KEY")
+        val prompt = prompt("test") {
+            user("Hello")
+        }
+-->
+<!--- SUFFIX
+    }
+}
+-->
+```kotlin
+// 将任何客户端封装为具有重试功能
+val client = OpenAILLMClient(apiKey)
+val resilientClient = RetryingLLMClient(client)
+
+// 现在所有操作都将在瞬时错误时自动重试
+val response = resilientClient.execute(prompt, OpenAIModels.Chat.GPT4o)
+```
+<!--- KNIT example-prompt-api-05.kt -->
+
+#### 配置重试行为
+
+Koog 提供了几种预定义的重试配置：
+
+| 配置         | 最大尝试次数 | 初始延迟 | 最大延迟 | 使用场景         |
+|--------------|-------------|----------|----------|------------------|
+| `DISABLED`   | 1（不重试） | -        | -        | 开发/测试        |
+| `CONSERVATIVE` | 3           | 2秒      | 30秒     | 常规生产用途     |
+| `AGGRESSIVE` | 5           | 500毫秒  | 20秒     | 关键操作         |
+| `PRODUCTION` | 3           | 1秒      | 20秒     | 推荐默认值       |
+
+直接使用它们或创建自定义配置：
+
+<!--- INCLUDE
+import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+import ai.koog.prompt.executor.clients.retry.RetryConfig
+import ai.koog.prompt.executor.clients.retry.RetryingLLMClient
+import kotlin.time.Duration.Companion.seconds
+
+val apiKey = System.getenv("OPENAI_API_KEY")
+val client = OpenAILLMClient(apiKey)
+-->
+```kotlin
+// 使用预定义配置
+val conservativeClient = RetryingLLMClient(
+    delegate = client,
+    config = RetryConfig.CONSERVATIVE
+)
+
+// 或者创建自定义配置
+val customClient = RetryingLLMClient(
+    delegate = client,
+    config = RetryConfig(
+        maxAttempts = 5,
+        initialDelay = 1.seconds,
+        maxDelay = 30.seconds,
+        backoffMultiplier = 2.0,
+        jitterFactor = 0.2
+    )
+)
+```
+<!--- KNIT example-prompt-api-06.kt -->
+
+#### 可重试错误模式
+
+默认情况下，重试机制会识别常见的瞬时错误：
+
+-   **HTTP 状态码**：429（速率限制）、500、502、503、504
+-   **错误关键词**："rate limit"（速率限制）、"timeout"（超时）、"connection reset"（连接重置）、"overloaded"（过载）
+
+你可以为特定需求定义自定义模式：
+
+<!--- INCLUDE
+import ai.koog.prompt.executor.clients.retry.RetryConfig
+import ai.koog.prompt.executor.clients.retry.RetryablePattern
+-->
+```kotlin
+val config = RetryConfig(
+    retryablePatterns = listOf(
+        RetryablePattern.Status(429),           // 特定状态码
+        RetryablePattern.Keyword("quota"),      // 错误消息中的关键词
+        RetryablePattern.Regex(Regex("ERR_\\d+")), // 自定义正则表达式模式
+        RetryablePattern.Custom { error ->      // 自定义逻辑
+            error.contains("temporary") && error.length > 20
+        }
+    )
+)
+```
+<!--- KNIT example-prompt-api-07.kt -->
+
+#### 使用提示词执行器进行重试
+
+使用提示词执行器时，请在创建执行器之前封装底层客户端：
+
+<!--- INCLUDE
+import ai.koog.prompt.executor.clients.anthropic.AnthropicLLMClient
+import ai.koog.prompt.executor.clients.bedrock.BedrockLLMClient
+import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+import ai.koog.prompt.executor.clients.retry.RetryConfig
+import ai.koog.prompt.executor.clients.retry.RetryingLLMClient
+import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
+import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
+import ai.koog.prompt.llm.LLMProvider
+
+-->
+```kotlin
+// 带有重试功能的单提供方执行器
+val resilientClient = RetryingLLMClient(
+    OpenAILLMClient(System.getenv("OPENAI_API_KEY")),
+    RetryConfig.PRODUCTION
+)
+val executor = SingleLLMPromptExecutor(resilientClient)
+
+// 带有灵活客户端配置的多提供方执行器
+val multiExecutor = MultiLLMPromptExecutor(
+    LLMProvider.OpenAI to RetryingLLMClient(
+        OpenAILLMClient(System.getenv("OPENAI_API_KEY")),
+        RetryConfig.CONSERVATIVE
+    ),
+    LLMProvider.Anthropic to RetryingLLMClient(
+        AnthropicLLMClient(System.getenv("ANTHROPIC_API_KEY")),
+        RetryConfig.AGGRESSIVE
+    ),
+    // Bedrock 客户端已内置 AWS SDK 重试功能
+    LLMProvider.Bedrock to BedrockLLMClient(
+        awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID"),
+        awsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY"),
+        awsSessionToken = System.getenv("AWS_SESSION_TOKEN"),
+    ))
+```
+<!--- KNIT example-prompt-api-08.kt -->
+
+#### 流式传输与重试
+
+流式传输操作可选择重试（默认禁用）：
+
+<!--- INCLUDE
+import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.clients.retry.RetryConfig
+import ai.koog.prompt.executor.clients.retry.RetryingLLMClient
+import ai.koog.prompt.dsl.prompt
+import kotlinx.coroutines.runBlocking
+
+fun main() {
+    runBlocking {
+        val baseClient = OpenAILLMClient(System.getenv("OPENAI_API_KEY"))
+        val prompt = prompt("test") {
+            user("Generate a story")
+        }
+-->
+<!--- SUFFIX
+    }
+}
+-->
+```kotlin
+val config = RetryConfig(
+    maxAttempts = 3
+)
+
+val client = RetryingLLMClient(baseClient, config)
+val stream = client.executeStreaming(prompt, OpenAIModels.Chat.GPT4o)
+```
+<!--- KNIT example-prompt-api-09.kt -->
+
+> **注意**：流式传输重试仅适用于在接收到第一个令牌之前发生的连接失败。一旦流式传输开始，错误将被传递，以保持内容完整性。
+
+### 超时配置
+
+所有 LLM 客户端都支持超时配置，以防止请求挂起：
+
+<!--- INCLUDE
+import ai.koog.prompt.executor.clients.ConnectionTimeoutConfig
+import ai.koog.prompt.executor.clients.openai.OpenAIClientSettings
+import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+
+val apiKey = System.getenv("OPENAI_API_KEY")
+-->
+```kotlin
+val client = OpenAILLMClient(
+    apiKey = apiKey,
+    settings = OpenAIClientSettings(
+        timeoutConfig = ConnectionTimeoutConfig(
+            connectTimeoutMillis = 5000,    // 建立连接的超时时间为 5 秒
+            requestTimeoutMillis = 60000    // 整个请求的超时时间为 60 秒
+        )
+    )
+)
+```
+<!--- KNIT example-prompt-api-10.kt -->
+
+### 错误处理最佳实践
+
+在生产环境中使用 LLM 时：
+
+1.  **始终将操作封装在 `try-catch` 代码块中**，以处理意外错误。
+2.  **记录带上下文的错误**以便调试。
+3.  **为关键操作实现回退策略**。
+4.  **监控重试模式**以识别系统性问题。
+
+全面的错误处理示例：
+
+<!--- INCLUDE
+import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.clients.retry.RetryingLLMClient
+import ai.koog.prompt.dsl.prompt
+import kotlinx.coroutines.runBlocking
+import org.slf4j.LoggerFactory
+
+fun main() {
+    runBlocking {
+        val logger = LoggerFactory.getLogger("Example")
+        val resilientClient = RetryingLLMClient(
+            OpenAILLMClient(System.getenv("OPENAI_API_KEY"))
+        )
+        val prompt = prompt("test") { user("Hello") }
+        val model = OpenAIModels.Chat.GPT4o
+        
+        fun processResponse(response: Any) { /* ... */ }
+        fun scheduleRetryLater() { /* ... */ }
+        fun notifyAdministrator() { /* ... */ }
+        fun useDefaultResponse() { /* ... */ }
+-->
+<!--- SUFFIX
+    }
+}
+-->
+```kotlin
+try {
+    val response = resilientClient.execute(prompt, model)
+    processResponse(response)
+} catch (e: Exception) {
+    logger.error("LLM operation failed", e)
+    
+    when {
+        e.message?.contains("rate limit") == true -> {
+            // 专门处理速率限制
+            scheduleRetryLater()
+        }
+        e.message?.contains("invalid api key") == true -> {
+            // 处理认证错误
+            notifyAdministrator()
+        }
+        else -> {
+            // 回退到备用解决方案
+            useDefaultResponse()
+        }
+    }
+}
+```
+<!--- KNIT example-prompt-api-11.kt -->
+
 ## 多模态输入
 
 除了在提示词中提供文本消息外，Koog 还允许你将图像、音频、视频和文件与 `user` 消息一同发送给 LLM。与标准的纯文本提示词一样，你也可以使用 DSL 结构来构建提示词并向其添加媒体。
@@ -142,7 +424,7 @@ val prompt = prompt("multimodal_input") {
     }
 }
 ```
-<!--- KNIT example-prompt-api-05.kt -->
+<!--- KNIT example-prompt-api-12.kt -->
 
 ### 文本提示词内容
 
@@ -166,7 +448,7 @@ user(
     )
 )
 ```
-<!--- KNIT example-prompt-api-06.kt -->
+<!--- KNIT example-prompt-api-13.kt -->
 
 ### 文件附件
 
@@ -195,27 +477,27 @@ user(
     )
 )
 ```
-<!--- KNIT example-prompt-api-07.kt -->
+<!--- KNIT example-prompt-api-14.kt -->
 
 `attachments` 形参接受一个文件输入列表，其中每个项都是以下某个类的实例：
 
-- `Attachment.Image`: 图像附件，例如 `jpg` 或 `png` 文件。
-- `Attachment.Audio`: 音频附件，例如 `mp3` 或 `wav` 文件。
-- `Attachment.Video`: 视频附件，例如 `mpg` 或 `avi` 文件。
-- `Attachment.File`: 文件附件，例如 `pdf` 或 `txt` 文件。
+-   `Attachment.Image`: 图像附件，例如 `jpg` 或 `png` 文件。
+-   `Attachment.Audio`: 音频附件，例如 `mp3` 或 `wav` 文件。
+-   `Attachment.Video`: 视频附件，例如 `mpg` 或 `avi` 文件。
+-   `Attachment.File`: 文件附件，例如 `pdf` 或 `txt` 文件。
 
 上述每个类都接受以下形参：
 
 | 名称       | 数据类型                               | 必需                   | 描述                                                                                                 |
 |------------|-----------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------------|
-| `content`  | [AttachmentContent](#attachmentcontent) | Yes                        | 所提供文件内容的源。有关更多信息，请参见 [AttachmentContent](#attachmentcontent)。 |
+| `content`  | [AttachmentContent](#attachmentcontent) | Yes                        | 所提供文件内容的来源。有关更多信息，请参见 [AttachmentContent](#attachmentcontent)。 |
 | `format`   | String                                  | Yes                        | 所提供文件的格式。例如，`png`。                                                        |
 | `mimeType` | String                                  | Only for `Attachment.File` | 所提供文件的 MIME 类型。例如，`image/png`。                                               |
 | `fileName` | String                                  | No                         | 所提供文件的名称，包括扩展名。例如，`screenshot.png`。                       |
 
 #### AttachmentContent
 
-`AttachmentContent` 定义了作为 LLM 输入提供的内容的类型和源。支持以下类：
+`AttachmentContent` 定义了作为 LLM 输入提供的内容的类型和来源。支持以下类：
 
 `AttachmentContent.URL(val url: String)`
 
@@ -243,7 +525,7 @@ user(
 
 `AttachmentContent.PlainText(val text: String)`
 
-仅当附件类型为 `Attachment.File` 时适用。提供纯文本文件（例如 `text/plain` MIME 类型）的内容。接受以下形参：
+_仅当附件类型为 `Attachment.File` 时适用_。提供纯文本文件（例如 `text/plain` MIME 类型）的内容。接受以下形参：
 
 | 名称   | 数据类型 | 必需 | 描述              |
 |--------|-----------|----------|--------------------------|
@@ -271,32 +553,39 @@ val prompt = prompt("mixed_content") {
     }
 }
 ```
-<!--- KNIT example-prompt-api-08.kt -->
+<!--- KNIT example-prompt-api-15.kt -->
 
 ## 提示词执行器
 
-提示词执行器提供了一种更高级的方式与 LLM 协同工作，处理客户端的创建和管理细节。
+尽管 LLM 客户端提供对提供方的直接访问，但 **提示词执行器** 提供了更高级的抽象，简化了常见使用场景并处理客户端生命周期管理。当你希望：
 
-你可以使用提示词执行器来管理和运行提示词。
-你可以根据计划使用的 LLM 提供方选择提示词执行器，或者使用其中一个可用 LLM 客户端创建自定义提示词执行器。
+-   无需管理客户端配置即可快速原型开发
+-   通过统一接口与多个提供方协同工作
+-   简化大型应用程序中的依赖注入
+-   抽象化提供方特有的细节
+
+提示词执行器是理想选择。
+
+### 执行器类型
 
 Koog 框架提供了几种提示词执行器：
 
-- **单提供方执行器**：
-    - `simpleOpenAIExecutor`: 用于执行带有 OpenAI 模型的提示词。
-    - `simpleAnthropicExecutor`: 用于执行带有 Anthropic 模型的提示词。
-    - `simpleGoogleExecutor`: 用于执行带有 Google 模型的提示词。
-    - `simpleOpenRouterExecutor`: 用于执行带有 OpenRouter 的提示词。
-    - `simpleOllamaExecutor`: 用于执行带有 Ollama 的提示词。
+-   **单提供方执行器**：
+    -   `simpleOpenAIExecutor`: 用于执行带有 OpenAI 模型的提示词。
+    -   `simpleAnthropicExecutor`: 用于执行带有 Anthropic 模型的提示词。
+    -   `simpleGoogleExecutor`: 用于执行带有 Google 模型的提示词。
+    -   `simpleOpenRouterExecutor`: 用于执行带有 OpenRouter 的提示词。
+    -   `simpleOllamaExecutor`: 用于执行带有 Ollama 的提示词。
 
-- **多提供方执行器**：
-    - `DefaultMultiLLMPromptExecutor`: 用于与多个 LLM 提供方协同工作
+-   **多提供方执行器**：
+    -   `DefaultMultiLLMPromptExecutor`: 用于与多个 LLM 提供方协同工作
 
 ### 创建单提供方执行器
 
-要为特定的 LLM 提供方创建提示词执行器，请使用相应函数。例如，要创建 OpenAI 提示词执行器，你需要调用 `simpleOpenAIExecutor` 函数并提供与 OpenAI 服务进行认证所需的 API 密钥：
+要为特定的 LLM 提供方创建提示词执行器，请使用相应函数。
+例如，要创建 OpenAI 提示词执行器，你需要调用 `simpleOpenAIExecutor` 函数并提供与 OpenAI 服务进行认证所需的 API 密钥：
 
-1. 创建提示词执行器：
+1.  创建提示词执行器：
 <!--- INCLUDE
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 const val apiToken = "YOUR_API_TOKEN"
@@ -305,14 +594,13 @@ const val apiToken = "YOUR_API_TOKEN"
 // 创建一个 OpenAI 执行器
 val promptExecutor = simpleOpenAIExecutor(apiToken)
 ```
-<!--- KNIT example-prompt-api-09.kt -->
+<!--- KNIT example-prompt-api-16.kt -->
 
-2. 使用特定的 LLM 执行提示词：
+2.  使用特定的 LLM 执行提示词：
 <!--- INCLUDE
-import ai.koog.agents.example.examplePromptApi08.prompt
-import ai.koog.agents.example.examplePromptApi09.promptExecutor
+import ai.koog.agents.example.examplePromptApi12.prompt
+import ai.koog.agents.example.examplePromptApi16.promptExecutor
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
-import ai.koog.prompt.executor.model.PromptExecutorExt.execute
 import kotlinx.coroutines.runBlocking
 
 fun main() {
@@ -327,15 +615,15 @@ fun main() {
 val response = promptExecutor.execute(
     prompt = prompt,
     model = OpenAIModels.Chat.GPT4o
-)
+).single()
 ```
-<!--- KNIT example-prompt-api-10.kt -->
+<!--- KNIT example-prompt-api-17.kt -->
 
 ### 创建多提供方执行器
 
-要创建与多个 LLM 提供方协同工作的提示词执行器，请完成以下步骤：
+要创建与多个 LLM 提供方协同工作的提示词执行器，请执行以下操作：
 
-1. 为所需的 LLM 提供方配置客户端，并提供相应的 API 密钥。例如：
+1.  为所需的 LLM 提供方配置客户端，并提供相应的 API 密钥。例如：
 <!--- INCLUDE
 import ai.koog.prompt.executor.clients.anthropic.AnthropicLLMClient
 import ai.koog.prompt.executor.clients.google.GoogleLLMClient
@@ -346,26 +634,25 @@ val openAIClient = OpenAILLMClient(System.getenv("OPENAI_KEY"))
 val anthropicClient = AnthropicLLMClient(System.getenv("ANTHROPIC_KEY"))
 val googleClient = GoogleLLMClient(System.getenv("GOOGLE_KEY"))
 ```
-<!--- KNIT example-prompt-api-11.kt -->
+<!--- KNIT example-prompt-api-18.kt -->
 
-2. 将配置好的客户端传递给 `DefaultMultiLLMPromptExecutor` 类构造函数，以创建具有多个 LLM 提供方的提示词执行器：
+2.  将配置好的客户端传递给 `DefaultMultiLLMPromptExecutor` 类构造函数，以创建具有多个 LLM 提供方的提示词执行器：
 <!--- INCLUDE
-import ai.koog.agents.example.examplePromptApi11.anthropicClient
-import ai.koog.agents.example.examplePromptApi11.googleClient
-import ai.koog.agents.example.examplePromptApi11.openAIClient
+import ai.koog.agents.example.examplePromptApi18.anthropicClient
+import ai.koog.agents.example.examplePromptApi18.googleClient
+import ai.koog.agents.example.examplePromptApi18.openAIClient
 import ai.koog.prompt.executor.llms.all.DefaultMultiLLMPromptExecutor
 -->
 ```kotlin
 val multiExecutor = DefaultMultiLLMPromptExecutor(openAIClient, anthropicClient, googleClient)
 ```
-<!--- KNIT example-prompt-api-12.kt -->
+<!--- KNIT example-prompt-api-19.kt -->
 
-3. 使用特定的 LLM 执行提示词：
+3.  使用特定的 LLM 执行提示词：
 <!--- INCLUDE
-import ai.koog.agents.example.examplePromptApi08.prompt
-import ai.koog.agents.example.examplePromptApi12.multiExecutor
+import ai.koog.agents.example.examplePromptApi12.prompt
+import ai.koog.agents.example.examplePromptApi19.multiExecutor
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
-import ai.koog.prompt.executor.model.PromptExecutorExt.execute
 import kotlinx.coroutines.runBlocking
 
 fun main() {
@@ -379,6 +666,6 @@ fun main() {
 val response = multiExecutor.execute(
     prompt = prompt,
     model = OpenAIModels.Chat.GPT4o
-)
+).single()
 ```
-<!--- KNIT example-prompt-api-13.kt -->
+<!--- KNIT example-prompt-api-20.kt -->
