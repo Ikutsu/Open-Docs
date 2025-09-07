@@ -182,3 +182,89 @@ val strategy = strategy<Unit, Unit>("strategy-name") {
 *   **nodeLLMSendToolResult**: ツール結果をLLMに送信し、応答を取得します。詳細は、[APIリファレンス](https://api.koog.ai/agents/agents-core/ai.koog.agents.core.dsl.extension/node-l-l-m-send-tool-result.html)を参照してください。
 
 *   **nodeLLMSendMultipleToolResults**: 複数のツール結果をLLMに送信します。詳細は、[APIリファレンス](https://api.koog.ai/agents/agents-core/ai.koog.agents.core.dsl.extension/node-l-l-m-send-multiple-tool-results.html)を参照してください。
+
+## エージェントをツールとして使用する
+
+このフレームワークは、任意のAIエージェントを他のエージェントが使用できるツールに変換する機能を提供します。
+この強力な機能により、特化されたエージェントが上位のオーケストレーションエージェントによってツールとして呼び出される階層型エージェントアーキテクチャを作成できます。
+
+### エージェントをツールに変換する
+
+エージェントをツールに変換するには、`asTool()`拡張関数を使用します。
+
+<!--- INCLUDE
+import ai.koog.agents.core.agent.AIAgent
+import ai.koog.agents.core.agent.asTool
+import ai.koog.agents.core.tools.ToolParameterDescriptor
+import ai.koog.agents.core.tools.ToolParameterType
+import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+
+const val apiKey = ""
+val analysisToolRegistry = ToolRegistry {}
+
+-->
+```kotlin
+// Create a specialized agent
+val analysisAgent = AIAgent(
+    executor = simpleOpenAIExecutor(apiKey),
+    llmModel = OpenAIModels.Chat.GPT4o,
+    systemPrompt = "You are a financial analysis specialist.",
+    toolRegistry = analysisToolRegistry
+)
+
+// Convert the agent to a tool
+val analysisAgentTool = analysisAgent.asTool(
+    agentName = "analyzeTransactions",
+    agentDescription = "Performs financial transaction analysis",
+    inputDescriptor = ToolParameterDescriptor(
+        name = "request",
+        description = "Transaction analysis request",
+        type = ToolParameterType.String
+    )
+)
+```
+<!--- KNIT example-tools-overview-05.kt -->
+
+### 他のエージェントでエージェントツールを使用する
+
+ツールに変換されたエージェントツールは、別エージェントのツールレジストリに追加できます。
+
+<!--- INCLUDE
+import ai.koog.agents.core.agent.AIAgent
+import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.agents.example.exampleToolsOverview05.analysisAgentTool
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+
+const val apiKey = ""
+
+-->
+```kotlin
+// Create a coordinator agent that can use specialized agents as tools
+val coordinatorAgent = AIAgent(
+    executor = simpleOpenAIExecutor(apiKey),
+    llmModel = OpenAIModels.Chat.GPT4o,
+    systemPrompt = "You coordinate different specialized services.",
+    toolRegistry = ToolRegistry {
+        tool(analysisAgentTool)
+        // Add other tools as needed
+    }
+)
+```
+<!--- KNIT example-tools-overview-06.kt -->
+
+### エージェントツールの実行
+
+エージェントツールが呼び出されると：
+
+1.  引数は入力ディスクリプタに従って逆シリアル化されます。
+2.  ラップされたエージェントは、逆シリアル化された入力で実行されます。
+3.  エージェントの出力はシリアル化され、ツール結果として返されます。
+
+### エージェントをツールとして使用するメリット
+
+*   **モジュール性**: 複雑なワークフローを特化されたエージェントに分割します。
+*   **再利用性**: 同じ特化されたエージェントを複数のコーディネーターエージェントで利用できます。
+*   **関心の分離**: 各エージェントは自身の特定のドメインに集中できます。

@@ -81,13 +81,13 @@ imageLoader.enqueue(request)
 
 ## 鍵值產生器 (Keyers)
 
-鍵值產生器 (Keyers) 將資料轉換為快取鍵的一部分。當此請求的輸出被寫入到 [記憶體快取 (MemoryCache)](/coil/api/coil-core/coil3.memory/-memory-cache) 時，此值將用作 `MemoryCache.Key.key`。
+鍵值產生器 (Keyers) 將資料轉換為快取鍵的一部分。當此請求的輸出被寫入到 `MemoryCache` 時，此值將用作 `MemoryCache.Key.key`。
 
 詳情請參閱 [Keyers](/coil/api/coil-core/coil3.key/-keyer)。
 
 ## 抓取器 (Fetchers)
 
-抓取器 (Fetchers) 將資料（例如 URL、URI、檔案等）轉換為 [影像來源 (ImageSource)](/coil/api/coil-core/coil3.request/-image-source) 或 [影像 (Image)](/coil/api/coil-core/coil3.drawable/-image)。它們通常將輸入資料轉換為可由 `Decoder` 消耗的格式。使用此介面來新增對自訂抓取機制（例如 Cronet、自訂 URI 方案等）的支援。
+抓取器 (Fetchers) 將資料（例如 URL、URI、檔案等）轉換為 `ImageSource` 或 `Image`。它們通常將輸入資料轉換為可由 `Decoder` 消耗的格式。使用此介面來新增對自訂抓取機制（例如 Cronet、自訂 URI 方案等）的支援。
 
 詳情請參閱 [Fetcher](/coil/api/coil-core/coil3.fetch/-fetcher)。
 
@@ -99,6 +99,67 @@ imageLoader.enqueue(request)
 解碼器 (Decoders) 讀取一個 `ImageSource` 並傳回一個 `Image`。使用此介面來新增對自訂檔案格式（例如 GIF、SVG、TIFF 等）的支援。
 
 詳情請參閱 [Decoder](/coil/api/coil-core/coil3.decode/-decoder)。
+
+## 自訂 ImageLoader 和 ImageRequest 屬性
+
+Coil 支援透過其 `Extras` 將自訂資料附加到 `ImageRequest` 和 `ImageLoader`。`Extras` 是一個額外屬性的映射 (map)，透過 `Extras.Key` 進行參照。
+
+例如，假設我們想為每個 `ImageRequest` 支援自訂逾時時間。我們可以這樣為其新增自訂擴展函式：
+
+```kotlin
+fun ImageRequest.Builder.timeout(timeout: Duration) = apply {
+    extras[timeoutKey] = timeout
+}
+
+fun ImageLoader.Builder.timeout(timeout: Duration) = apply {
+    extras[timeoutKey] = timeout
+}
+
+val ImageRequest.timeout: Duration
+    get() = getExtra(timeoutKey)
+
+val Options.timeout: Duration
+    get() = getExtra(timeoutKey)
+
+// NOTE: Extras.Key instances should be declared statically as they're compared with instance equality.
+private val timeoutKey = Extras.Key(default = Duration.INFINITE)
+```
+
+然後我們可以在我們將註冊到 `ImageLoader` 中的自訂 `Interceptor` 內部讀取該屬性：
+
+```kotlin
+class TimeoutInterceptor : Interceptor {
+    override suspend fun intercept(chain: Interceptor.Chain): ImageResult {
+        val timeout = chain.request.timeout
+        if (timeout.isFinite()) {
+            return withTimeout(timeout) {
+                chain.proceed(chain.request)
+            }
+        } else {
+            return chain.proceed(chain.request)
+        }
+    }
+}
+```
+
+最後，我們可以在建立 `ImageRequest` 時設定該屬性：
+
+```kotlin
+AsyncImage(
+    model = ImageRequest.Builder(PlatformContext.current)
+        .data("https://example.com/image.jpg")
+        .timeout(10.seconds)
+        .build(),
+    contentDescription = null,
+)
+```
+
+此外：
+
+- 我們可以透過我們定義的 `ImageLoader.Builder.timeout` 擴展函式設定預設逾時值。
+- 我們可以透過我們定義的 `Options.timeout` 擴展函式在 `Mapper`、`Fetcher` 和 `Decoder` 內部讀取逾時時間。
+
+[Coil 本身也使用此模式](https://github.com/coil-kt/coil/blob/main/coil-gif/src/main/java/coil3/gif/imageRequests.kt)，在 `coil-gif` 以及其他擴展函式庫中支援 GIF 的自訂請求屬性。
 
 ## 連結元件
 
@@ -128,10 +189,10 @@ class PartialUrlFetcher(
             .build()
         val response = callFactory.newCall(request).await()
 
-        // Read the image URL.
+        // 讀取影像 URL。
         val imageUrl: String = readImageUrl(response.body)
 
-        // This will delegate to the internal network fetcher.
+        // 這將委託給內部網路抓取器。
         val data = imageLoader.components.map(imageUrl, options)
         val output = imageLoader.components.newFetcher(data, options, imageLoader)
         val (fetcher) = checkNotNull(output) { "no supported fetcher" }

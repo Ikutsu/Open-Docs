@@ -182,3 +182,89 @@ val strategy = strategy<Unit, Unit>("strategy-name") {
 * **nodeLLMSendToolResult**：將工具結果發送給 LLM 並取得回應。有關詳細資訊，請參閱 [API 參考](https://api.koog.ai/agents/agents-core/ai.koog.agents.core.dsl.extension/node-l-l-m-send-tool-result.html)。
 
 * **nodeLLMSendMultipleToolResults**：將多個工具結果發送給 LLM。有關詳細資訊，請參閱 [API 參考](https://api.koog.ai/agents/agents-core/ai.koog.agents.core.dsl.extension/node-l-l-m-send-multiple-tool-results.html)。
+
+## 將代理程式作為工具使用
+
+該框架提供了將任何 AI 代理程式轉換為可供其他代理程式使用的工具的能力。
+這個強大的功能讓您可以建立分層代理程式架構，其中專業代理程式可以被更高層次的協調代理程式呼叫為工具。
+
+### 將代理程式轉換為工具
+
+若要將代理程式轉換為工具，請使用 `asTool()` 擴展函數：
+
+<!--- INCLUDE
+import ai.koog.agents.core.agent.AIAgent
+import ai.koog.agents.core.agent.asTool
+import ai.koog.agents.core.tools.ToolParameterDescriptor
+import ai.koog.agents.core.tools.ToolParameterType
+import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+
+const val apiKey = ""
+val analysisToolRegistry = ToolRegistry {}
+
+-->
+```kotlin
+// Create a specialized agent
+val analysisAgent = AIAgent(
+    executor = simpleOpenAIExecutor(apiKey),
+    llmModel = OpenAIModels.Chat.GPT4o,
+    systemPrompt = "You are a financial analysis specialist.",
+    toolRegistry = analysisToolRegistry
+)
+
+// Convert the agent to a tool
+val analysisAgentTool = analysisAgent.asTool(
+    agentName = "analyzeTransactions",
+    agentDescription = "執行金融交易分析",
+    inputDescriptor = ToolParameterDescriptor(
+        name = "request",
+        description = "交易分析請求",
+        type = ToolParameterType.String
+    )
+)
+```
+<!--- KNIT example-tools-overview-05.kt -->
+
+### 在其他代理程式中使用代理程式工具
+
+一旦轉換為工具，您可以將該代理程式工具新增到另一個代理程式的工具註冊表：
+
+<!--- INCLUDE
+import ai.koog.agents.core.agent.AIAgent
+import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.agents.example.exampleToolsOverview05.analysisAgentTool
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+
+const val apiKey = ""
+
+-->
+```kotlin
+// Create a coordinator agent that can use specialized agents as tools
+val coordinatorAgent = AIAgent(
+    executor = simpleOpenAIExecutor(apiKey),
+    llmModel = OpenAIModels.Chat.GPT4o,
+    systemPrompt = "您協調不同的專業服務。",
+    toolRegistry = ToolRegistry {
+        tool(analysisAgentTool)
+        // 視需要新增其他工具
+    }
+)
+```
+<!--- KNIT example-tools-overview-06.kt -->
+
+### 代理程式工具執行
+
+當代理程式工具被呼叫時：
+
+1. 引數會根據輸入描述符進行反序列化。
+2. 包裝的代理程式會使用反序列化的輸入執行。
+3. 代理程式的輸出會被序列化並作為工具結果返回。
+
+### 將代理程式作為工具的好處
+
+- **模組化**：將複雜的工作流程分解為專業代理程式。
+- **可重用性**：在多個協調代理程式中重複使用相同的專業代理程式。
+- **職責分離**：每個代理程式都可以專注於其特定領域。

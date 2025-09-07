@@ -2,9 +2,9 @@
 
 Android は、[多くの画像フォーマット](https://developer.android.com/guide/topics/media/media-formats#image-formats) を標準でサポートしていますが、サポートしていないフォーマットも多数存在します (例: GIF、SVG、MP4 など)。
 
-幸いなことに、[ImageLoader](image_loaders.md) は、新しいキャッシュレイヤー、新しいデータ型、新しいフェッチ動作、新しい画像エンコーディングを追加したり、ベースの画像読み込み動作を上書きしたりするためのプラグイン可能なコンポーネントをサポートしています。Coil のイメージパイプラインは、以下の順序で実行される5つの主要な部分で構成されています: [Interceptors](/coil/api/coil-core/coil3.intercept/-interceptor)、[Mappers](/coil/api/coil-core/coil3.map/-mapper)、[Keyers](/coil/api/coil-core/coil3.key/-keyer)、[Fetchers](/coil/api/coil-core/coil3.fetch/-fetcher)、そして [Decoders](/coil/api/coil-core/coil3.decode/-decoder)。
+幸いなことに、[ImageLoader](image_loaders.md) は、新しいキャッシュレイヤー、新しいデータ型、新しいフェッチ動作、新しい画像エンコーディングを追加したり、ベースの画像読み込み動作を上書きしたりするためのプラグイン可能なコンポーネントをサポートしています。Coil のイメージパイプラインは、[Interceptors](/coil/api/coil-core/coil3.intercept/-interceptor)、[Mappers](/coil/api/coil-core/coil3.map/-mapper)、[Keyers](/coil/api/coil-core/coil3.key/-keyer)、[Fetchers](/coil/api/coil-core/coil3.fetch/-fetcher)、そして [Decoders](/coil/api/coil-core/coil3.decode/-decoder) の5つの主要な部分で構成されており、これらは以下の順序で実行されます。
 
-カスタムコンポーネントは、[ComponentRegistry](/coil/api/coil-core/coil3/-component-registry) を介して `ImageLoader` を構築する際に追加する必要があります:
+カスタムコンポーネントは、`ImageLoader` を [ComponentRegistry](/coil/api/coil-core/coil3/-component-registry) を介して構築する際に追加する必要があります:
 
 ```kotlin
 val imageLoader = ImageLoader.Builder(context)
@@ -20,7 +20,7 @@ val imageLoader = ImageLoader.Builder(context)
 
 ## Interceptors
 
-Interceptors は、`ImageLoader` のイメージエンジンへのリクエストを監視、変換、ショートサーキット、または再試行することを可能にします。例えば、次のようにカスタムキャッシュレイヤーを追加できます:
+Interceptors を使用すると、`ImageLoader` のイメージエンジンへのリクエストを監視、変換、ショートサーキット、または再試行できます。例えば、次のようにカスタムキャッシュレイヤーを追加できます:
 
 ```kotlin
 class CustomCacheInterceptor(
@@ -100,7 +100,68 @@ Decoders は `ImageSource` を読み取り、`Image` を返します。このイ
 
 詳細については、[Decoder](/coil/api/coil-core/coil3.decode/-decoder) を参照してください。
 
-## Chaining components
+## カスタム ImageLoader および ImageRequest のプロパティ
+
+Coil は、`ImageRequest` と `ImageLoader` にカスタムデータを `Extras` を介してアタッチする機能をサポートしています。`Extras` は、`Extras.Key` を介して参照される追加プロパティのマップです。
+
+例えば、各 `ImageRequest` にカスタムタイムアウトをサポートしたいとします。次のようにカスタム拡張関数を追加できます:
+
+```kotlin
+fun ImageRequest.Builder.timeout(timeout: Duration) = apply {
+    extras[timeoutKey] = timeout
+}
+
+fun ImageLoader.Builder.timeout(timeout: Duration) = apply {
+    extras[timeoutKey] = timeout
+}
+
+val ImageRequest.timeout: Duration
+    get() = getExtra(timeoutKey)
+
+val Options.timeout: Duration
+    get() = getExtra(timeoutKey)
+
+// NOTE: Extras.Key インスタンスは、インスタンスの等価性で比較されるため、静的に宣言する必要があります。
+private val timeoutKey = Extras.Key(default = Duration.INFINITE)
+```
+
+次に、`ImageLoader` に登録するカスタム `Interceptor` 内でそのプロパティを読み取ることができます:
+
+```kotlin
+class TimeoutInterceptor : Interceptor {
+    override suspend fun intercept(chain: Interceptor.Chain): ImageResult {
+        val timeout = chain.request.timeout
+        if (timeout.isFinite()) {
+            return withTimeout(timeout) {
+                chain.proceed(chain.request)
+            }
+        } else {
+            return chain.proceed(chain.request)
+        }
+    }
+}
+```
+
+最後に、`ImageRequest` を作成する際にプロパティを設定できます:
+
+```kotlin
+AsyncImage(
+    model = ImageRequest.Builder(PlatformContext.current)
+        .data("https://example.com/image.jpg")
+        .timeout(10.seconds)
+        .build(),
+    contentDescription = null,
+)
+```
+
+さらに:
+
+- 定義した `ImageLoader.Builder.timeout` 拡張関数を介して、デフォルトのタイムアウト値を設定できます。
+- 定義した `Options.timeout` 拡張関数を介して、`Mapper`、`Fetcher`、`Decoder` 内でタイムアウトを読み取ることができます。
+
+[Coil 自体もこのパターンを使用しています](https://github.com/coil-kt/coil/blob/main/coil-gif/src/main/java/coil3/gif/imageRequests.kt) で、`coil-gif` や他の拡張ライブラリにおける GIF のカスタムリクエストプロパティをサポートしています。
+
+## コンポーネントのチェーニング
 
 Coil のイメージローダーコンポーネントの便利な特性は、それらが内部的にチェーンできることです。例えば、ロードされる画像URLを取得するためにネットワークリクエストを実行する必要があるとします。
 

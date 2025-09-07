@@ -225,7 +225,7 @@ android {
 // <module directory>/build.gradle.kts
 
 plugins {
-    id("com.vanniktech.maven.publish") version "0.30.0"
+    id("com.vanniktech.maven.publish") version "%vanniktechPublishPlugin%" 
 }
 ```
 
@@ -239,13 +239,13 @@ plugins {
 // <module directory>/build.gradle.kts
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
-
+    publishToMavenCentral()
+    
     signAllPublications()
-
+    
     coordinates(group.toString(), "fibonacci", version.toString())
-
-    pom {
+    
+    pom { 
         name = "Fibonacci library"
         description = "A mathematics calculation library."
         inceptionYear = "2024"
@@ -314,7 +314,7 @@ mavenPublishing {
     *   `SIGNING_PASSWORD` 是您在產生 GPG 金鑰時提供的密碼。
     *   `GPG_KEY_CONTENTS` 應包含您 [key.gpg 檔案](#export-your-private-key)的完整內容。
 
-    ![將機密添加到 GitHub](github_secrets.png){width=700}
+    ![Add secrets to GitHub](github_secrets.png){width=700}
 
 您將在下一步的 CI 配置中使用這些機密的名稱。
 
@@ -380,7 +380,7 @@ jobs:
 
     您可能希望這些與您在 `build.gradle.kts` 檔案中指定的函式庫版本號碼相同。
 
-    ![在 GitHub 上建立發行版](create_release_and_tag.png){width=700}
+    ![Create a release on GitHub](create_release_and_tag.png){width=700}
 
 6.  仔細檢查您想要發行版指向的分支（特別是如果它不是預設分支），並為您的新版本添加適當的發行說明。
 7.  使用描述下方的核取方塊將發行版標記為預發行版（對於早期存取版本（例如 alpha、beta 或 RC）很有用）。
@@ -397,11 +397,11 @@ jobs:
 11. 一旦您的部署處於 _validated_ 狀態，請檢查它是否包含您上傳的所有構件。
     如果一切看起來正確，請點擊 **Publish** 按鈕以發佈這些構件。
 
-    ![發佈設定](published_on_maven_central.png){width=700}
+    ![Publishing settings](published_on_maven_central.png){width=700}
 
     > 發行版後，構件需要一些時間（通常約 15-30 分鐘）才能在 Maven Central 儲存庫中公開可用。它們可能需要更長時間才能被索引並在 [Maven Central 網站](https://central.sonatype.com/)上可搜尋。
     >
-{style="tip"}
+    {style="tip"}
 
 要在部署驗證後自動發佈構件，請將工作流程中的 `publishToMavenCentral` 任務替換為 `publishAndReleaseToMavenCentral`。
 

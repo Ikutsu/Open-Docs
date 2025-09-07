@@ -18,7 +18,7 @@ Tracing 特性是一个强大的监控和调试工具，它捕获有关代理运
 1.  Tracing 特性拦截代理流水线中的事件。
 2.  事件根据配置的消息过滤器进行过滤。
 3.  过滤后的事件传递给已注册的消息处理器。
-4.  消息处理器格式化事件并将其输出到各自的目标。
+4.  消息处理器格式化并输出事件到各自的目标。
 
 ## 配置与初始化
 
@@ -26,7 +26,7 @@ Tracing 特性是一个强大的监控和调试工具，它捕获有关代理运
 
 要使用 Tracing 特性，你需要：
 
-1.  拥有一个或多个消息处理器（你可以使用现有处理器或创建自己的处理器）。
+1.  拥有一个或多个消息处理器（你可以使用现有处理器或创建你自己的处理器）。
 2.  在你的代理中安装 `Tracing`。
 3.  配置消息过滤器（可选）。
 4.  将消息处理器添加到该特性中。
@@ -305,7 +305,7 @@ install(Tracing) {
 
 <!--- INCLUDE
 import ai.koog.agents.core.agent.AIAgent
-import ai.koog.agents.core.feature.remote.server.config.AIAgentFeatureServerConnectionConfig
+import ai.koog.agents.core.feature.remote.server.config.DefaultServerConnectionConfig
 import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.agents.features.tracing.writer.TraceFeatureMessageRemoteWriter
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
@@ -329,7 +329,7 @@ val agent = AIAgent(
     executor = simpleOllamaAIExecutor(),
     llmModel = OllamaModels.Meta.LLAMA_3_2,
 ) {
-    val connectionConfig = AIAgentFeatureServerConnectionConfig(host = host, port = port)
+    val connectionConfig = DefaultServerConnectionConfig(host = host, port = port)
     val writer = TraceFeatureMessageRemoteWriter(
         connectionConfig = connectionConfig
     )
@@ -349,7 +349,7 @@ agent.run(input)
 <!--- INCLUDE
 import ai.koog.agents.core.feature.model.AIAgentFinishedEvent
 import ai.koog.agents.core.feature.model.DefinedFeatureEvent
-import ai.koog.agents.core.feature.remote.client.config.AIAgentFeatureClientConnectionConfig
+import ai.koog.agents.core.feature.remote.client.config.DefaultClientConnectionConfig
 import ai.koog.agents.core.feature.remote.client.FeatureMessageRemoteClient
 import ai.koog.agents.utils.use
 import io.ktor.http.*
@@ -368,7 +368,7 @@ fun main() {
 }
 -->
 ```kotlin
-val clientConfig = AIAgentFeatureClientConnectionConfig(host = host, port = port, protocol = URLProtocol.HTTP)
+val clientConfig = DefaultClientConnectionConfig(host = host, port = port, protocol = URLProtocol.HTTP)
 val agentEvents = mutableListOf<DefinedFeatureEvent>()
 
 val clientJob = launch {
@@ -463,7 +463,7 @@ install(Tracing) {
 
 <!--- INCLUDE
 import ai.koog.agents.core.agent.AIAgent
-import ai.koog.agents.core.feature.remote.server.config.AIAgentFeatureServerConnectionConfig
+import ai.koog.agents.core.feature.remote.server.config.DefaultServerConnectionConfig
 import ai.koog.agents.example.exampleTracing01.outputPath
 import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.agents.features.tracing.writer.TraceFeatureMessageFileWriter
@@ -480,7 +480,7 @@ import kotlinx.io.files.SystemFileSystem
 const val input = "What's the weather like in New York?"
 val syncOpener = { path: Path -> SystemFileSystem.sink(path).buffered() }
 val logger = KotlinLogging.logger {}
-val connectionConfig = AIAgentFeatureServerConnectionConfig(host = ai.koog.agents.example.exampleTracing06.host, port = ai.koog.agents.example.exampleTracing06.port)
+val connectionConfig = DefaultServerConnectionConfig(host = ai.koog.agents.example.exampleTracing06.host, port = ai.koog.agents.example.exampleTracing06.port)
 
 fun main() {
    runBlocking {

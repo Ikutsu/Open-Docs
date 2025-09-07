@@ -1,6 +1,6 @@
 [//]: # (title: Maven Central에 라이브러리 게시하기 – 튜토리얼)
 
-이 튜토리얼에서는 Kotlin Multiplatform 라이브러리를 [Maven Central](https://central.sonatype.com/) 저장소에 게시하는 방법을 배웁니다.
+이 튜토리얼에서는 Kotlin 멀티플랫폼 라이브러리를 [Maven Central](https://central.sonatype.com/) 저장소에 게시하는 방법을 배웁니다.
 
 라이브러리를 게시하려면 다음을 수행해야 합니다.
 
@@ -78,8 +78,8 @@ Maven Central에 무언가를 게시하기 전에 아티팩트에 [PGP 서명](h
 
 서명을 시작하려면 키 쌍을 생성해야 합니다.
 
-*   _개인 키_는 아티팩트에 서명하는 데 사용되며 다른 사람과 공유해서는 안 됩니다.
-*   _공개 키_는 다른 사람과 공유하여 아티팩트의 서명을 확인할 수 있도록 합니다.
+*   *개인 키*는 아티팩트에 서명하는 데 사용되며 다른 사람과 공유해서는 안 됩니다.
+*   *공개 키*는 다른 사람과 공유하여 아티팩트의 서명을 확인할 수 있도록 합니다.
 
 서명을 관리할 수 있는 `gpg` 도구는 [GnuPG 웹사이트](https://gnupg.org/download/index.html)에서 사용할 수 있습니다. [Homebrew](https://brew.sh/)와 같은 패키지 관리자를 사용하여 설치할 수도 있습니다.
 
@@ -220,7 +220,7 @@ android {
 // <module directory>/build.gradle.kts
 
 plugins {
-    id("com.vanniktech.maven.publish") version "0.30.0"
+    id("com.vanniktech.maven.publish") version "%vanniktechPublishPlugin%"
 }
 ```
 
@@ -234,7 +234,7 @@ plugins {
 // <module directory>/build.gradle.kts
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
     
     signAllPublications()
     
@@ -277,7 +277,7 @@ mavenPublishing {
 *   `coordinates`: 라이브러리의 `groupId`, `artifactId`, `version`을 지정합니다.
 *   [license](https://central.sonatype.org/publish/requirements/#license-information): 라이브러리가 게시되는 라이선스입니다.
 *   [developer information](https://central.sonatype.org/publish/requirements/#developer-information): 라이브러리 저자를 나열합니다.
-*   [SCM (Source Code Management) information](https://central.sonatype.org/publish/requirements/#scm-information): 라이브러리의 소스 코드가 호스팅되는 위치를 지정합니다.
+*   [SCM (Source Code Management) information](https://central.sonatype.com/publish/requirements/#scm-information): 라이브러리의 소스 코드가 호스팅되는 위치를 지정합니다.
 
 ## 지속적 통합을 사용하여 Maven Central에 게시
 

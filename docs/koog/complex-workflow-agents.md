@@ -4,16 +4,16 @@
 
 创建和配置此类代理的过程通常包括以下步骤：
 
-1. 提供一个提示执行器与 LLM 通信。
-2. 定义一个控制代理工作流的策略。
-3. 配置代理行为。
-4. 实现供代理使用的工具。
-5. 添加可选特性，例如事件处理、记忆或追踪。
-6. 使用用户输入运行代理。
+1.  提供一个提示执行器与 LLM 通信。
+2.  定义一个控制代理工作流的策略。
+3.  配置代理行为。
+4.  实现供代理使用的工具。
+5.  添加可选特性，例如事件处理、记忆或追踪。
+6.  使用用户输入运行代理。
 
 ## 前提条件
 
-- 您拥有用于实现 AI 代理的 LLM 提供商提供的有效 API 密钥。有关所有可用提供商的列表，请参见 [概述](index.md)。
+-   您拥有用于实现 AI 代理的 LLM 提供商提供的有效 API 密钥。有关所有可用提供商的列表，请参见 [概述](index.md)。
 
 !!! tip
     使用环境变量或安全的配置管理系统来存储您的 API 密钥。
@@ -54,7 +54,7 @@ val promptExecutor = simpleOpenAIExecutor(token)
 
 要创建与多个 LLM 提供商协作的提示执行器，请执行以下操作：
 
-1. 使用相应的 API 密钥配置所需 LLM 提供商的客户端。例如：
+1) 使用相应的 API 密钥配置所需 LLM 提供商的客户端。例如：
 <!--- INCLUDE
 import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
 import ai.koog.prompt.executor.clients.anthropic.AnthropicLLMClient
@@ -66,7 +66,7 @@ val anthropicClient = AnthropicLLMClient(System.getenv("ANTHROPIC_KEY"))
 val googleClient = GoogleLLMClient(System.getenv("GOOGLE_KEY"))
 ```
 <!--- KNIT example-complex-workflow-agents-02.kt -->
-2. 将配置好的客户端传递给 `DefaultMultiLLMPromptExecutor` 类构造函数，以创建支持多个 LLM 提供商的提示执行器：
+2) 将配置好的客户端传递给 `DefaultMultiLLMPromptExecutor` 类构造函数，以创建支持多个 LLM 提供商的提示执行器：
 <!--- INCLUDE
 import ai.koog.agents.example.exampleComplexWorkflowAgents02.anthropicClient
 import ai.koog.agents.example.exampleComplexWorkflowAgents02.googleClient
@@ -302,9 +302,9 @@ val toolRegistry = ToolRegistry {
 特性允许您为代理添加新功能、修改其行为、提供对外部系统和资源的访问，并在代理运行时记录和监控事件。
 以下特性可用：
 
-- EventHandler
-- AgentMemory
-- Tracing
+-   EventHandler
+-   AgentMemory
+-   Tracing
 
 要安装该特性，请调用 `install` 函数并将该特性作为实参提供。
 例如，要安装事件处理特性，您需要执行以下操作：

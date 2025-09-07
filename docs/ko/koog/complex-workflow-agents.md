@@ -52,7 +52,7 @@ val promptExecutor = simpleOpenAIExecutor(token)
 ```
 <!--- KNIT example-complex-workflow-agents-01.kt -->
 
-여러 LLM 제공자와 함께 작동하는 프롬프트 실행기를 생성하려면 다음을 수행하세요.
+여러 LLM 제공자와 함께 작동하는 프롬프트 실행기를 생성하려면 다음을 수행하세요:
 
 1.  필요한 LLM 제공자를 위한 클라이언트를 해당 API 키로 구성합니다. 예를 들어:
 <!--- INCLUDE
@@ -66,7 +66,7 @@ val anthropicClient = AnthropicLLMClient(System.getenv("ANTHROPIC_KEY"))
 val googleClient = GoogleLLMClient(System.getenv("GOOGLE_KEY"))
 ```
 <!--- KNIT example-complex-workflow-agents-02.kt -->
-2.  여러 LLM 제공자와 함께 작동하는 프롬프트 실행기를 생성하기 위해 구성된 클라이언트를 `DefaultMultiLLMPromptExecutor` 클래스 생성자에 전달합니다.
+2.  구성된 클라이언트를 `DefaultMultiLLMPromptExecutor` 클래스 생성자에 전달하여 여러 LLM 제공자와 함께 작동하는 프롬프트 실행기를 생성합니다:
 <!--- INCLUDE
 import ai.koog.agents.example.exampleComplexWorkflowAgents02.anthropicClient
 import ai.koog.agents.example.exampleComplexWorkflowAgents02.googleClient
@@ -313,6 +313,7 @@ val toolRegistry = ToolRegistry {
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.feature.handler.AgentFinishedContext
 import ai.koog.agents.core.feature.handler.AgentStartContext
+import ai.koog.agents.features.eventHandler.feature.EventHandler
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
 import ai.koog.prompt.llm.OllamaModels
 

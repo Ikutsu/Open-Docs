@@ -32,7 +32,7 @@ import ai.koog.agents.memory.model.FactType
 import ai.koog.agents.memory.model.SingleFact
 -->
 ```kotlin
-// 存储偏好的 IDE 主题（单个值）
+// Storing favorite IDE theme (single value)
 val themeFact = SingleFact(
     concept = Concept(
         "ide-theme", 
@@ -51,7 +51,7 @@ import ai.koog.agents.memory.model.FactType
 import ai.koog.agents.memory.model.MultipleFacts
 -->
 ```kotlin
-// 存储编程语言（多个值）
+// Storing programming languages (multiple values)
 val languagesFact = MultipleFacts(
     concept = Concept(
         "programming-languages",
@@ -186,7 +186,7 @@ val agent = AIAgent(
 
 以下代码片段演示了内存存储的基本设置以及事实如何保存到内存和从内存加载。
 
-1. 设置内存存储
+1) 设置内存存储
 <!--- INCLUDE
 import ai.koog.agents.memory.providers.LocalFileMemoryProvider
 import ai.koog.agents.memory.providers.LocalMemoryConfig
@@ -195,7 +195,7 @@ import ai.koog.rag.base.files.JVMFileSystemProvider
 import kotlin.io.path.Path
 -->
 ```kotlin
-// 创建内存提供者
+// Create a memory provider
 val memoryProvider = LocalFileMemoryProvider(
     config = LocalMemoryConfig("customer-support-memory"),
     storage = SimpleStorage(JVMFileSystemProvider.ReadWrite),
@@ -205,7 +205,7 @@ val memoryProvider = LocalFileMemoryProvider(
 ```
 <!--- KNIT example-agent-memory-06.kt -->
 
-2. 将事实存储到内存中
+2) 将事实存储到内存中
 <!--- INCLUDE
 import ai.koog.agents.example.exampleAgentMemory03.MemorySubjects
 import ai.koog.agents.example.exampleAgentMemory06.memoryProvider
@@ -233,7 +233,7 @@ memoryProvider.save(
 ```
 <!--- KNIT example-agent-memory-07.kt -->
 
-3. 检索事实
+3) 检索事实
 <!--- INCLUDE
 import ai.koog.agents.example.exampleAgentMemory03.MemorySubjects
 import ai.koog.agents.example.exampleAgentMemory06.memoryProvider
@@ -247,7 +247,7 @@ suspend fun main() {
 }
 -->
 ```kotlin
-// 获取存储的信息
+// Get the stored information
 val greeting = memoryProvider.load(
     concept = Concept("greeting", "User's name", FactType.SINGLE),
     subject = MemorySubjects.User,
@@ -283,12 +283,12 @@ import ai.koog.agents.memory.model.FactType
 -->
 ```kotlin
 val strategy = strategy("example-agent") {
-    // 自动检测并保存事实的节点
+    // Node to automatically detect and save facts
     val detectFacts by nodeSaveToMemoryAutoDetectFacts<Unit>(
         subjects = listOf(MemorySubjects.User, MemorySubjects.Machine)
     )
 
-    // 加载特定事实的节点
+    // Node to load specific facts
     val loadPreferences by node<Unit, Unit> {
         withMemory {
             loadFactsToAgent(
@@ -298,7 +298,7 @@ val strategy = strategy("example-agent") {
         }
     }
 
-    // 在策略中连接节点
+    // Connect nodes in the strategy
     edge(nodeStart forwardTo detectFacts)
     edge(detectFacts forwardTo loadPreferences)
     edge(loadPreferences forwardTo nodeFinish)
@@ -316,7 +316,7 @@ import ai.koog.rag.base.files.JVMFileSystemProvider
 import ai.koog.agents.memory.storage.Aes256GCMEncryptor
 -->
 ```kotlin
-// 简单的加密存储设置
+// Simple encrypted storage setup
 val secureStorage = EncryptedStorage(
     fs = JVMFileSystemProvider.ReadWrite,
     encryption = Aes256GCMEncryptor("your-secret-key")
@@ -432,19 +432,36 @@ val saveAutoDetect by nodeSaveToMemoryAutoDetectFacts<Unit>(
     - 将相关信息置于同一主题下
 
 3. **错误处理**
-   <!--- INCLUDE
-    import ai.koog.agents.core.agent.AIAgent
-    -->
-   ```kotlin
-    try {
-        memoryProvider.save(fact, subject)
-    } catch (e: Exception) {
-        println("哎呀！无法保存：${e.message}")
-    }
-   ```
-   <!--- KNIT example-agent-memory-14.kt -->
+<!--- INCLUDE
+import ai.koog.agents.example.exampleAgentMemory03.MemorySubjects
+import ai.koog.agents.example.exampleAgentMemory06.memoryProvider
+import ai.koog.agents.memory.model.Concept
+import ai.koog.agents.memory.model.DefaultTimeProvider
+import ai.koog.agents.memory.model.FactType
+import ai.koog.agents.memory.model.MemoryScope
+import ai.koog.agents.memory.model.SingleFact
+import kotlinx.coroutines.runBlocking
 
-   有关错误处理的更多详细信息，请参见 [错误处理和边缘情况](#error-handling-and-edge-cases)。
+fun main() {
+    runBlocking {
+        val fact = SingleFact(
+            concept = Concept("preferred-language", "What programming language is preferred by the user?", FactType.SINGLE),
+            value = "Kotlin",
+            timestamp = DefaultTimeProvider.getCurrentTimestamp()
+        )
+        val subject = MemorySubjects.User
+        val scope = MemoryScope.Product("my-app")
+-->
+```kotlin
+try {
+    memoryProvider.save(fact, subject, scope)
+} catch (e: Exception) {
+    println("哎呀！无法保存：${e.message}")
+}
+```
+<!--- KNIT example-agent-memory-14.kt -->
+
+有关错误处理的更多详细信息，请参见 [错误处理和边缘情况](#error-handling-and-edge-cases)。
 
 ## 错误处理和边缘情况
 
@@ -536,6 +553,6 @@ val concept = Concept(
     factType = FactType.MULTIPLE
 )
 ```
-<!--- KNIT example-agent-memory-15.kt -->
+<!--- KNIT example-agent-memory-16.kt -->
 
 这让您可以为该概念存储多个值，这些值将作为 list 检索。

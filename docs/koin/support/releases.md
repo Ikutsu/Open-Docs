@@ -10,36 +10,47 @@ custom_edit_url: null
 对于每个版本，文档结构如下：
 
 - `Kotlin`: 指定该版本使用的 Kotlin 版本，确保语言兼容性清晰，并使您能够利用最新的 Kotlin 特性。
-- `New`: 突出新引入的功能和改进，这些改进增强了功能性并提升了开发者体验。
-- `Experimental`: 列出标记为实验性的 API 和功能。这些功能正在积极开发中，并可能根据社区反馈进行更改。
+- `New`: 突出新引入的特性和改进，这些改进增强了功能性并提升了开发者体验。
+- `Experimental`: 列出标记为实验性的 API 和特性。这些功能正在积极开发中，并可能根据社区反馈进行更改。
 - `Deprecated`: 识别已标记为废弃的 API 和功能，并提供关于推荐替代方案的指导，帮助您为未来的移除做准备。
 - `Breaking`: 详细说明任何可能破坏向后兼容性的更改，确保您在迁移过程中了解必要的调整。
 
 这种结构化方法不仅阐明了每个版本中的增量变化，也强化了我们在 Koin 项目中对透明度、稳定性与持续改进的承诺。
 
-更多详情请参阅 [API 稳定性契约](api-stability.md)。
+更多详情请参阅 [Api Stability Contract](api-stability.md)。
 
 ## 4.1.1
 
+:::note
+使用 Kotlin `2.1.21`
+:::
+
 ### 新增 🎉
 
-`koin-ktor`
-- 集成 - 提供 `KtorDIExtension` 以集成 Ktor 3.2 默认 DI 引擎
-```kotlin
-fun Application.setupDatabase(config: DbConfig) {
-    // ...
-    dependencies {
-        provide<Database> { database }
-    }
-}
+`koin-compose-viewmodel-navigation`
+- 增强了 `sharedKoinViewModel`，并增加了可选的 `navGraphRoute` 形参，以更好地支持 Compose 导航
 
-class CustomerRepositoryImpl(private val database: Database) : CustomerRepository
-fun Application.customerDataModule() {
-    koinModule {
-        singleOf(::CustomerRepositoryImpl) bind CustomerRepository::class
-    }
-}
-```
+`koin-core`
+- 核心解析器性能优化 – 避免单作用域解析中不必要的扁平化
+- 增强了作用域调试功能，可显示关联的作用域 ID
+
+### 库更新 📚
+
+- **Kotlin** 2.1.21 (from 2.1.20)
+- **Ktor** 3.2.3 (from 3.1.3) 
+- **Jetbrains Compose** 1.8.2 (from 1.8.0)
+- **AndroidX**: Fragment 1.8.9, WorkManager 2.10.3, Lifecycle 2.9.3, Navigation 2.9.3
+- **Testing**: Robolectric 4.15.1, Benchmark 0.4.14
+- **Build**: Binary Validator 0.18.1, NMCP 1.1.0
+
+### Bug 修复 🐛
+
+`koin-core`
+- 回滚了导致兼容性错误的日志记录器约束
+- 修复了 Compose 作用域解析问题，改进了 `LocalKoinApplication`/`LocalKoinScope` 上下文处理
+
+`koin-build`
+- 修复了 Maven Central 发布问题
 
 ## 4.1.0
 
@@ -128,7 +139,7 @@ startKoin {
 
 `koin-test-coroutines`
 - 新增 `koin-test-coroutines` Koin 模块，以引入与协程相关的新测试 API。
-- 扩展 - 扩展 Verify API，让您可以使用 `moduleConfiguration` 检查 Koin 配置，然后验证模块/惰性模块 (Lazy Modules) 的混合配置：
+- 扩展 - 扩展 Verify API，让您可以使用 `moduleConfiguration` 检测 Koin 配置，然后验证模块/惰性模块 (Lazy Modules) 的混合配置：
 ```kotlin
 val conf = moduleConfiguration {
     modules(m1)
@@ -142,7 +153,7 @@ conf.verify(extraTypes = androidTypes)
 ```
 
 `koin-core-annotations`
-- 注解 - `@InjectedParam` 或 `@Provided` 用于标记一个属性，使其被视为注入参数或动态提供。目前用于 `Verify` API，但未来可能用于更轻量级的 DSL 声明。
+- 注解 - `@InjectedParam` 或 `@Provided` 用于标记一个属性，使其被视为注入形参或动态提供。目前用于 `Verify` API，但未来可能用于更轻量级的 DSL 声明。
 
 ### 实验性 🚧
 
@@ -180,7 +191,7 @@ module {
 - 导航扩展 - 添加了 `sharedViewModel`，以从导航的 `NavbackEntry` 重用 ViewModel 实例
 
 `koin-test`
-- 注解 - Koin 配置验证 API `Verify` 现在帮助您检查可空、惰性 (lazy) 和列表参数。只需使用 `@InjectedParam` 或 `@Provided` 标记一个属性，使其被视为注入参数或动态提供。这避免了 Verify API 中的复杂声明。
+- 注解 - Koin 配置验证 API `Verify` 现在帮助您检测可空、惰性 (lazy) 和列表形参。只需使用 `@InjectedParam` 或 `@Provided` 标记一个属性，使其被视为注入形参或动态提供。这避免了 Verify API 中的复杂声明。
 ```kotlin
 // now detected in Verify
 class ComponentB(val a: ComponentA? = null)
@@ -236,15 +247,15 @@ class ComponentBProvided(@Provided val a: ComponentA)
 - `KoinPlatformTools.generateId()` - 借助此新版本的 Kotlin，我们受益于新的 `kotlin.uuid.uuid` API。`KoinPlatformTools.generateId()` Koin 函数现在使用此新 API 在跨平台上生成真实的 UUID。
 
 `koin-viewmodel`
-- Koin 4.0 引入了新的 ViewModel DSL 和 API，这些 API 统一了 Google/Jetbrains KMP API。为了避免代码库中的重复，ViewModel API 现在位于 `koin-core-viewmodel` 和 `koin-core-viewmodel-navigation` 项目中。
+- Koin 4.0 引入了 ViewModel DSL 和 API，这些 API 统一了 Google/Jetbrains KMP API。为避免代码库中的重复，ViewModel API 现在位于 `koin-core-viewmodel` 和 `koin-core-viewmodel-navigation` 项目中。
 - ViewModel DSL 的导入是 `org.koin.core.module.dsl.*`
 
 以下给定项目中的 API 现已稳定。
 
 `koin-core-coroutines` - 所有 API 现已稳定
-- 所有 `lazyModules`
-- `awaitAllStartJobs`、`onKoinStarted`、`isAllStartedJobsDone`
-- `waitAllStartJobs`、`runOnKoinStarted`
+- all `lazyModules`
+- `awaitAllStartJobs`, `onKoinStarted`, `isAllStartedJobsDone`
+- `waitAllStartJobs`, `runOnKoinStarted`
 - `KoinApplication.coroutinesEngine`
 - `Module.includes(lazy)`
 - `lazyModule()`
@@ -253,7 +264,7 @@ class ComponentBProvided(@Provided val a: ComponentA)
 ### 实验性 🚧
 
 `koin-test`
-- `ParameterTypeInjection` - 新 API，用于帮助设计 `Verify` API 的动态参数注入
+- `ParameterTypeInjection` - 新 API，用于帮助设计 `Verify` API 的动态形参注入
 
 `koin-androidx-startup`
 - `koin-androidx-startup` - 使用 `AndroidX Startup`（通过 `androidx.startup.Initializer` API）启动 Koin 的新能力。`koin-androidx-startup` 中的所有 API 都是实验性的。
@@ -280,7 +291,7 @@ class ComponentBProvided(@Provided val a: ComponentA)
 - 旧的 Compose API 函数在错误级别上已废弃：
     - 函数 `inject()` 已废弃（错误级别），倾向于 `koinInject()`
     - 函数 `getViewModel()` 已废弃（错误级别），倾向于 `koinViewModel()`
-    - 函数 `rememberKoinInject()` 已废弃（错误级别），倾向于 `koinInject()`
+    - 函数 `rememberKoinInject()` 已废弃（错误级别），倾向于 `koinInject()`，
 
 - `koin-compose-viewmodel`
     - ViewModel DSL，倾向于 `koin-core` 中新的集中式 DSL
@@ -381,7 +392,7 @@ class ComponentBProvided(@Provided val a: ComponentA)
 
 `koin-core`
 - 新的 ExtensionManager API，用于帮助为 Koin 编写扩展引擎 - `ExtensionManager` + `KoinExtension`
-- Parameters API 更新，新增 `parameterArrayOf` 和 `parameterSetOf`
+- 形参 API 更新，新增 `parameterArrayOf` 和 `parameterSetOf`
 
 `koin-test`
 - `Verification` API - 帮助在模块上运行 `verify`。
@@ -402,7 +413,7 @@ class ComponentBProvided(@Provided val a: ComponentA)
 - 新增 `koinNavViewModel()`
 
 `koin-compose` - 用于 Compose 的新多平台 API
-- `koinInject`、`rememberKoinInject`
+- `koinInject`, `rememberKoinInject`
 - `KoinApplication`
 
 ### 实验性 🚧

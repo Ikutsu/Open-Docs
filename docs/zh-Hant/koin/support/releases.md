@@ -21,25 +21,36 @@ custom_edit_url: null
 
 ## 4.1.1
 
+:::note
+使用 Kotlin `2.1.21`
+:::
+
 ### 新功能 🎉
 
-`koin-ktor`
-- 整合 – 提供 `KtorDIExtension` 以整合 Ktor 3.2 預設的 DI 引擎
-```kotlin
-fun Application.setupDatabase(config: DbConfig) {
-    // ...
-    dependencies {
-        provide<Database> { database }
-    }
-}
+`koin-compose-viewmodel-navigation`
+- 增強了 `sharedKoinViewModel`，新增可選的 `navGraphRoute` 參數，以更好地支援 Compose 導航。
 
-class CustomerRepositoryImpl(private val database: Database) : CustomerRepository
-fun Application.customerDataModule() {
-    koinModule {
-        singleOf(::CustomerRepositoryImpl) bind CustomerRepository::class
-    }
-}
-```
+`koin-core`
+- 核心解析器效能最佳化 – 避免單一作用域解析中不必要的扁平化。
+- 強化作用域偵錯功能，顯示連結的作用域 ID。
+
+### 函式庫更新 📚
+
+- **Kotlin** 2.1.21 (從 2.1.20)
+- **Ktor** 3.2.3 (從 3.1.3)
+- **Jetbrains Compose** 1.8.2 (從 1.8.0)
+- **AndroidX**: Fragment 1.8.9、WorkManager 2.10.3、Lifecycle 2.9.3、Navigation 2.9.3
+- **Testing**: Robolectric 4.15.1、Benchmark 0.4.14
+- **Build**: Binary Validator 0.18.1、NMCP 1.1.0
+
+### 錯誤修正 🐛
+
+`koin-core`
+- 還原了導致相容性錯誤的記錄器約束。
+- 修正了 Compose 作用域解析問題，改進了 `LocalKoinApplication`/`LocalKoinScope` 的上下文處理。
+
+`koin-build`
+- 修正了 Maven Central 發佈問題。
 
 ## 4.1.0
 
@@ -162,7 +173,7 @@ startKoin {
     )
 }
 
-// will inject Session from MyScopeViewModel's scope
+// 將從 MyScopeViewModel 的作用域注入 Session
 class MyScopeViewModel(val session: Session) : ViewModel()
 
 module {
@@ -182,7 +193,7 @@ module {
 `koin-test`
 - 註解 – Koin 配置驗證 API `Verify` 現在可協助您檢查可空、惰性及列表參數。只需使用 `@InjectedParam` 或 `@Provided` 標記一個屬性，使其被視為注入參數或動態提供。這避免了 Verify API 中複雜的宣告。
 ```kotlin
-// now detected in Verify
+// 現在可在 Verify 中偵測到
 class ComponentB(val a: ComponentA? = null)
 class ComponentBParam(@InjectedParam val a: ComponentA)
 class ComponentBProvided(@Provided val a: ComponentA)

@@ -1,6 +1,6 @@
 # 複雑なワークフローエージェント
 
-単一実行エージェントに加え、`AIAgent` クラスを使用すると、カスタム戦略、ツール、構成、およびカスタム入出力タイプを定義することで、複雑なワークフローを処理するエージェントを構築できます。
+単一実行エージェントに加え、`AIAgent` クラスを使用すると、カスタム戦略、ツール、構成、およびカスタム入出力型を定義することで、複雑なワークフローを処理するエージェントを構築できます。
 
 このようなエージェントを作成および構成するプロセスには、通常、以下の手順が含まれます。
 
@@ -54,7 +54,7 @@ val promptExecutor = simpleOpenAIExecutor(token)
 
 複数のLLMプロバイダーで動作するプロンプトエグゼキュータを作成するには、以下を実行します。
 
-1.  必要なLLMプロバイダーのクライアントを、対応するAPIキーで構成します。たとえば、
+1) 必要なLLMプロバイダーのクライアントを、対応するAPIキーで構成します。たとえば、
 <!--- INCLUDE
 import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
 import ai.koog.prompt.executor.clients.anthropic.AnthropicLLMClient
@@ -66,7 +66,7 @@ val anthropicClient = AnthropicLLMClient(System.getenv("ANTHROPIC_KEY"))
 val googleClient = GoogleLLMClient(System.getenv("GOOGLE_KEY"))
 ```
 <!--- KNIT example-complex-workflow-agents-02.kt -->
-2.  構成されたクライアントを `DefaultMultiLLMPromptExecutor` クラスのコンストラクタに渡して、複数のLLMプロバイダーを持つプロンプトエグゼキュータを作成します。
+2) 構成されたクライアントを `DefaultMultiLLMPromptExecutor` クラスのコンストラクタに渡して、複数のLLMプロバイダーを持つプロンプトエグゼキュータを作成します。
 <!--- INCLUDE
 import ai.koog.agents.example.exampleComplexWorkflowAgents02.anthropicClient
 import ai.koog.agents.example.exampleComplexWorkflowAgents02.googleClient
@@ -105,9 +105,9 @@ val strategy = strategy<InputType, OutputType>("Simple calculator") {
 -->
 ```kotlin
 val processNode by node<InputType, OutputType> { input ->
-    // 入力を処理して出力を返す
-    // llm.writeSession を使用してLLMと対話できます
-    // callTool、callToolRaw などを使用してツールを呼び出すことができます
+    // Process the input and return an output
+    // You can use llm.writeSession to interact with the LLM
+    // You can call tools using callTool, callToolRaw, etc.
     transformedOutput
 }
 ```
@@ -143,22 +143,22 @@ val strategy = strategy<String, String>("Simple calculator") {
 }
 -->
 ```kotlin
-// 基本エッジ
+// Basic edge
 edge(sourceNode forwardTo targetNode)
 
-// 条件付きエッジ
+// Edge with condition
 edge(sourceNode forwardTo targetNode onCondition { output ->
-    // このエッジをたどるには true を返し、スキップするには false を返します
+    // Return true to follow this edge, false to skip it
     output.contains("specific text")
 })
 
-// 変換付きエッジ
+// Edge with transformation
 edge(sourceNode forwardTo targetNode transformed { output ->
-    // 出力をターゲットノードに渡す前に変換します
+    // Transform the output before passing it to the target node
     "Modified: $output"
 })
 
-// 条件と変換の組み合わせ
+// Combined condition and transformation
 edge(sourceNode forwardTo targetNode onCondition { it.isNotEmpty() } transformed { it.uppercase() })
 ```
 <!--- KNIT example-complex-workflow-agents-05.kt -->
@@ -173,32 +173,32 @@ import ai.koog.agents.core.dsl.extension.*
 -->
 ```kotlin
 val agentStrategy = strategy("Simple calculator") {
-    // 戦略のノードを定義する
+    // Define nodes for the strategy
     val nodeSendInput by nodeLLMRequest()
     val nodeExecuteTool by nodeExecuteTool()
     val nodeSendToolResult by nodeLLMSendToolResult()
 
-    // ノード間のエッジを定義する
-    // 開始 -> 入力送信
+    // Define edges between nodes
+    // Start -> Send input
     edge(nodeStart forwardTo nodeSendInput)
 
-    // 入力送信 -> 終了
+    // Send input -> Finish
     edge(
         (nodeSendInput forwardTo nodeFinish)
                 transformed { it }
                 onAssistantMessage { true }
     )
 
-    // 入力送信 -> ツール実行
+    // Send input -> Execute tool
     edge(
         (nodeSendInput forwardTo nodeExecuteTool)
                 onToolCall { true }
     )
 
-    // ツール実行 -> ツール結果送信
+    // Execute tool -> Send the tool result
     edge(nodeExecuteTool forwardTo nodeSendToolResult)
 
-    // ツール結果送信 -> 終了
+    // Send the tool result -> finish
     edge(
         (nodeSendToolResult forwardTo nodeFinish)
                 transformed { it }
@@ -272,7 +272,7 @@ import ai.koog.agents.core.tools.reflect.ToolSet
 import ai.koog.agents.core.tools.reflect.tools
 -->
 ```kotlin
-// 2つの数値を加算できるシンプルな電卓ツールを実装する
+// Implement a simple calculator tool that can add two numbers
 @LLMDescription("Tools for performing basic arithmetic operations")
 class CalculatorTools : ToolSet {
     @Tool
@@ -289,7 +289,7 @@ class CalculatorTools : ToolSet {
     }
 }
 
-// ツールをツールレジストリに追加する
+// Add the tool to the tool registry
 val toolRegistry = ToolRegistry {
     tools(CalculatorTools())
 }
@@ -313,6 +313,7 @@ val toolRegistry = ToolRegistry {
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.feature.handler.AgentFinishedContext
 import ai.koog.agents.core.feature.handler.AgentStartContext
+import ai.koog.agents.features.eventHandler.feature.EventHandler
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
 import ai.koog.prompt.llm.OllamaModels
 
@@ -324,14 +325,14 @@ val agent = AIAgent(
 )
 -->
 ```kotlin
-// EventHandler 機能をインストールする
+// install the EventHandler feature
 installFeatures = {
     install(EventHandler) {
         onBeforeAgentStarted { eventContext: AgentStartContext<*> ->
-            println("戦略の開始: ${eventContext.strategy.name}")
+            println("Starting strategy: ${eventContext.strategy.name}")
         }
         onAgentFinished { eventContext: AgentFinishedContext ->
-            println("結果: ${eventContext.result}")
+            println("Result: ${eventContext.result}")
         }
     }
 }
@@ -419,37 +420,37 @@ import kotlinx.coroutines.runBlocking
 
 -->
 ```kotlin
-// 環境変数からのAPIキーを使用してOpenAIエグゼキュータを使用する
+// Use the OpenAI executor with an API key from an environment variable
 val promptExecutor = simpleOpenAIExecutor(System.getenv("OPENAI_API_KEY"))
 
-// シンプルな戦略を作成する
+// Create a simple strategy
 val agentStrategy = strategy("Simple calculator") {
-    // 戦略のノードを定義する
+    // Define nodes for the strategy
     val nodeSendInput by nodeLLMRequest()
     val nodeExecuteTool by nodeExecuteTool()
     val nodeSendToolResult by nodeLLMSendToolResult()
 
-    // ノード間のエッジを定義する
-    // 開始 -> 入力送信
+    // Define edges between nodes
+    // Start -> Send input
     edge(nodeStart forwardTo nodeSendInput)
 
-    // 入力送信 -> 終了
+    // Send input -> Finish
     edge(
         (nodeSendInput forwardTo nodeFinish)
                 transformed { it }
                 onAssistantMessage { true }
     )
 
-    // 入力送信 -> ツール実行
+    // Send input -> Execute tool
     edge(
         (nodeSendInput forwardTo nodeExecuteTool)
                 onToolCall { true }
     )
 
-    // ツール実行 -> ツール結果送信
+    // Execute tool -> Send the tool result
     edge(nodeExecuteTool forwardTo nodeSendToolResult)
 
-    // ツール結果送信 -> 終了
+    // Send the tool result -> finish
     edge(
         (nodeSendToolResult forwardTo nodeFinish)
                 transformed { it }
@@ -457,7 +458,7 @@ val agentStrategy = strategy("Simple calculator") {
     )
 }
 
-// エージェントを構成する
+// Configure the agent
 val agentConfig = AIAgentConfig(
     prompt = Prompt.build("simple-calculator") {
         system(
@@ -475,7 +476,7 @@ val agentConfig = AIAgentConfig(
     maxAgentIterations = 10
 )
 
-// 2つの数値を加算できるシンプルな電卓ツールを実装する
+// Implement a simple calculator tool that can add two numbers
 @LLMDescription("Tools for performing basic arithmetic operations")
 class CalculatorTools : ToolSet {
     @Tool
@@ -492,12 +493,12 @@ class CalculatorTools : ToolSet {
     }
 }
 
-// ツールをツールレジストリに追加する
+// Add the tool to the tool registry
 val toolRegistry = ToolRegistry {
     tools(CalculatorTools())
 }
 
-// エージェントを作成する
+// Create the agent
 val agent = AIAgent(
     promptExecutor = promptExecutor,
     toolRegistry = toolRegistry,

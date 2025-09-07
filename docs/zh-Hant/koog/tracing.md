@@ -11,7 +11,7 @@
 *   工具調用
 *   代理程式圖中的節點執行
 
-此功能透過攔截代理程式管線中的關鍵事件，並將其轉發給可設定的訊息處理器。這些處理器可以將追蹤資訊輸出到各種目的地，例如紀錄檔或檔案系統中的其他類型檔案，使開發者能夠深入瞭解代理程式的行為並有效地排解問題。
+此功能透過攔截代理程式管線中的關鍵事件，並將其轉發給可設定的訊息處理器 (message processors)。這些處理器可以將追蹤資訊輸出到各種目的地，例如紀錄檔或檔案系統中的其他類型檔案，使開發者能夠深入瞭解代理程式的行為並有效地排解問題。
 
 ### 事件流程
 
@@ -98,12 +98,12 @@ val agent = AIAgent(
 -->
 ```kotlin
 // 僅篩選與 LLM 相關的事件
-messageFilter = { message ->
+messageFilter = { message -> 
     message is BeforeLLMCallEvent || message is AfterLLMCallEvent
 }
 
 // 僅篩選與工具相關的事件
-messageFilter = { message ->
+messageFilter = { message -> 
     message is ToolCallEvent ||
            message is ToolCallResultEvent ||
            message is ToolValidationErrorEvent ||
@@ -111,7 +111,7 @@ messageFilter = { message ->
 }
 
 // 僅篩選節點執行事件
-messageFilter = { message ->
+messageFilter = { message -> 
     message is AIAgentNodeExecutionStartEvent || message is AIAgentNodeExecutionEndEvent
 }
 ```
@@ -301,11 +301,11 @@ install(Tracing) {
 
 ### 將特定事件追蹤到遠端端點
 
-當您需要透過網路傳送事件資料時，可以使用追蹤到遠端端點。一旦啟動，追蹤到遠端端點會在指定的埠號啟動一個輕量型伺服器，並透過 Kotlin 伺服器傳送事件 (SSE) 傳送事件。
+當您需要透過網路傳送事件資料時，可以使用追蹤到遠端端點。一旦啟動，追蹤到遠端端點會在指定的埠號啟動一個輕量型伺服器，並透過 Kotlin 伺服器傳送事件 (Server-Sent Events, SSE) 傳送事件。
 
 <!--- INCLUDE
 import ai.koog.agents.core.agent.AIAgent
-import ai.koog.agents.core.feature.remote.server.config.AIAgentFeatureServerConnectionConfig
+import ai.koog.agents.core.feature.remote.server.config.DefaultServerConnectionConfig
 import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.agents.features.tracing.writer.TraceFeatureMessageRemoteWriter
 import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
@@ -329,7 +329,7 @@ val agent = AIAgent(
     executor = simpleOllamaAIExecutor(),
     llmModel = OllamaModels.Meta.LLAMA_3_2,
 ) {
-    val connectionConfig = AIAgentFeatureServerConnectionConfig(host = host, port = port)
+    val connectionConfig = DefaultServerConnectionConfig(host = host, port = port)
     val writer = TraceFeatureMessageRemoteWriter(
         connectionConfig = connectionConfig
     )
@@ -349,7 +349,7 @@ agent.run(input)
 <!--- INCLUDE
 import ai.koog.agents.core.feature.model.AIAgentFinishedEvent
 import ai.koog.agents.core.feature.model.DefinedFeatureEvent
-import ai.koog.agents.core.feature.remote.client.config.AIAgentFeatureClientConnectionConfig
+import ai.koog.agents.core.feature.remote.client.config.DefaultClientConnectionConfig
 import ai.koog.agents.core.feature.remote.client.FeatureMessageRemoteClient
 import ai.koog.agents.utils.use
 import io.ktor.http.*
@@ -368,7 +368,7 @@ fun main() {
 }
 -->
 ```kotlin
-val clientConfig = AIAgentFeatureClientConnectionConfig(host = host, port = port, protocol = URLProtocol.HTTP)
+val clientConfig = DefaultClientConnectionConfig(host = host, port = port, protocol = URLProtocol.HTTP)
 val agentEvents = mutableListOf<DefinedFeatureEvent>()
 
 val clientJob = launch {
@@ -463,7 +463,7 @@ install(Tracing) {
 
 <!--- INCLUDE
 import ai.koog.agents.core.agent.AIAgent
-import ai.koog.agents.core.feature.remote.server.config.AIAgentFeatureServerConnectionConfig
+import ai.koog.agents.core.feature.remote.server.config.DefaultServerConnectionConfig
 import ai.koog.agents.example.exampleTracing01.outputPath
 import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.agents.features.tracing.writer.TraceFeatureMessageFileWriter
@@ -480,7 +480,7 @@ import kotlinx.io.files.SystemFileSystem
 const val input = "What's the weather like in New York?"
 val syncOpener = { path: Path -> SystemFileSystem.sink(path).buffered() }
 val logger = KotlinLogging.logger {}
-val connectionConfig = AIAgentFeatureServerConnectionConfig(host = ai.koog.agents.example.exampleTracing06.host, port = ai.koog.agents.example.exampleTracing06.port)
+val connectionConfig = DefaultServerConnectionConfig(host = ai.koog.agents.example.exampleTracing06.host, port = ai.koog.agents.example.exampleTracing06.port)
 
 fun main() {
    runBlocking {
@@ -543,7 +543,7 @@ class CustomTraceProcessor : FeatureMessageProcessor() {
 
     override val isOpen: StateFlow<Boolean>
         get() = _isOpen.asStateFlow()
-
+    
     override suspend fun processMessage(message: FeatureMessage) {
         // 自訂處理邏輯
         when (message) {
@@ -554,7 +554,7 @@ class CustomTraceProcessor : FeatureMessageProcessor() {
             is AfterLLMCallEvent -> {
                 // 處理 LLM 呼叫結束事件
            }
-            // 處理其他事件類型
+            // 處理其他事件類型 
         }
     }
 
@@ -576,11 +576,11 @@ install(Tracing) {
 
 Koog 提供了可用於自訂訊息處理器的預定義事件類型。預定義事件可根據其相關實體分為多個類別：
 
--   [代理程式事件](#agent-events)
--   [策略事件](#strategy-events)
--   [節點事件](#node-events)
--   [LLM 呼叫事件](#llm-call-events)
--   [工具呼叫事件](#tool-call-events)
+- [代理程式事件](#agent-events)
+- [策略事件](#strategy-events)
+- [節點事件](#node-events)
+- [LLM 呼叫事件](#llm-call-events)
+- [工具呼叫事件](#tool-call-events)
 
 ### 代理程式事件
 

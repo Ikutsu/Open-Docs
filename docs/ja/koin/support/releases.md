@@ -17,29 +17,40 @@ custom_edit_url: null
 
 この構造化されたアプローチは、各リリースにおける段階的な変更を明確にするだけでなく、Koinプロジェクトにおける透明性、安定性、継続的な改善への私たちのコミットメントを強化します。
 
-詳細については、[API安定性契約](api-stability.md)を参照してください。
+詳細については、[Api Stability Contract](api-stability.md)を参照してください。
 
 ## 4.1.1
 
+:::note
+Kotlin `2.1.21` を使用
+:::
+
 ### New 🎉
 
-`koin-ktor`
-- 統合 - Ktor 3.2のデフォルトDIエンジンを統合するための`KtorDIExtension`を提供
-```kotlin
-fun Application.setupDatabase(config: DbConfig) {
-    // ...
-    dependencies {
-        provide<Database> { database }
-    }
-}
+`koin-compose-viewmodel-navigation`
+- Compose Navigationのサポートを向上させるため、オプションの`navGraphRoute`パラメータで`sharedKoinViewModel`を強化
 
-class CustomerRepositoryImpl(private val database: Database) : CustomerRepository
-fun Application.customerDataModule() {
-    koinModule {
-        singleOf(::CustomerRepositoryImpl) bind CustomerRepository::class
-    }
-}
-```
+`koin-core`
+- コアリゾルバーのパフォーマンス最適化 - 単一スコープ解決での不要なフラット化を回避
+- リンクされたスコープID表示によるスコープデバッグの強化
+
+### Library Updates 📚
+
+- **Kotlin** 2.1.21 (2.1.20から)
+- **Ktor** 3.2.3 (3.1.3から)
+- **Jetbrains Compose** 1.8.2 (1.8.0から)
+- **AndroidX**: Fragment 1.8.9, WorkManager 2.10.3, Lifecycle 2.9.3, Navigation 2.9.3
+- **Testing**: Robolectric 4.15.1, Benchmark 0.4.14
+- **Build**: Binary Validator 0.18.1, NMCP 1.1.0
+
+### Bug Fixes 🐛
+
+`koin-core`
+- 互換性エラーを引き起こしていたロガー制約を元に戻しました
+- `LocalKoinApplication`/`LocalKoinScope`コンテキスト処理の改善によるComposeスコープ解決の修正
+
+`koin-build`
+- Maven Centralの公開問題の修正
 
 ## 4.1.0
 
@@ -259,8 +270,8 @@ Kotlin `2.0.21` を使用
 - `koin-androidx-startup` - `AndroidX Startup`を使用してKoinを開始する新しい機能で、`androidx.startup.Initializer` APIを使用します。`koin-androidx-startup`内のすべてのAPIは実験的です。
 
 `koin-compose`
-- `rememberKoinModules` - @Composableコンポーネントに基づいてKoinモジュールをロード/アンロード
-- `rememberKoinScope` - @Composableコンポーネントに基づいてKoinスコープをロード/アンロード
+- `rememberKoinModules` - `@Composable`コンポーネントに基づいてKoinモジュールをロード/アンロード
+- `rememberKoinScope` - `@Composable`コンポーネントに基づいてKoinスコープをロード/アンロード
 - `KoinScope` - すべての下層のComposable子孫のためにKoinスコープをロード
 
 ### Deprecation ⚠️
@@ -274,7 +285,7 @@ Kotlin `2.0.21` を使用
     - `koin-core`の新しい一元化されたDSLを優先するViewModel DSL
     - すべての状態ViewModel APIはエラーレベルで非推奨です。
         - `stateViewModel()`、`getStateViewModel()` は、代わりに`viewModel()`を使用してください。
-        - `getSharedStateViewModel()`、`sharedStateViewModel()` は、代わりに`viewModel()`または共有インスタンスには`activityViewModel()`を使用してください。
+        - `getSharedStateViewModel()`, `sharedStateViewModel()` は、代わりに`viewModel()`または共有インスタンスには`activityViewModel()`を使用してください。
 
 `koin-compose`
 - 古いCompose API関数はエラーレベルで非推奨です。
@@ -341,7 +352,7 @@ Kotlin `1.9.22` を使用
 `koin-ktor`
 - 現在、Ktorインスタンスに隔離されたコンテキストを使用します（デフォルトコンテキストの代わりに`Application.getKoin()`を使用）。
 - Koinプラグインに新しいモニタリング機能が導入されました。
-- Ktorリクエストにスコープインスタンスを許可する`RequestScope`
+- `RequestScope`をKtorリクエストにスコープインスタンスを許可する
 
 ### Experimental 🚧
 

@@ -182,7 +182,7 @@ val agent = AIAgent(
 
 以下程式碼片段展示了記憶體儲存的基本設定，以及事實如何儲存到記憶體中和從記憶體中載入。
 
-1. 設定記憶體儲存
+1) 設定記憶體儲存
 <!--- INCLUDE
 import ai.koog.agents.memory.providers.LocalFileMemoryProvider
 import ai.koog.agents.memory.providers.LocalMemoryConfig
@@ -201,7 +201,7 @@ val memoryProvider = LocalFileMemoryProvider(
 ```
 <!--- KNIT example-agent-memory-06.kt -->
 
-2. 將事實儲存到記憶體中
+2) 將事實儲存到記憶體中
 <!--- INCLUDE
 import ai.koog.agents.example.exampleAgentMemory03.MemorySubjects
 import ai.koog.agents.example.exampleAgentMemory06.memoryProvider
@@ -229,7 +229,7 @@ memoryProvider.save(
 ```
 <!--- KNIT example-agent-memory-07.kt -->
 
-3. 檢索事實
+3) 檢索事實
 <!--- INCLUDE
 import ai.koog.agents.example.exampleAgentMemory03.MemorySubjects
 import ai.koog.agents.example.exampleAgentMemory06.memoryProvider
@@ -428,19 +428,40 @@ val saveAutoDetect by nodeSaveToMemoryAutoDetectFacts<Unit>(
     - 將相關資訊保留在相同主題下
 
 3. **處理錯誤**
-   <!--- INCLUDE
-    import ai.koog.agents.core.agent.AIAgent
-    -->
-   ```kotlin
-    try {
-        memoryProvider.save(fact, subject)
-    } catch (e: Exception) {
-        println("糟糕！無法儲存：${e.message}")
-    }
-   ```
-   <!--- KNIT example-agent-memory-14.kt -->
+<!--- INCLUDE
+import ai.koog.agents.example.exampleAgentMemory03.MemorySubjects
+import ai.koog.agents.example.exampleAgentMemory06.memoryProvider
+import ai.koog.agents.memory.model.Concept
+import ai.koog.agents.memory.model.DefaultTimeProvider
+import ai.koog.agents.memory.model.FactType
+import ai.koog.agents.memory.model.MemoryScope
+import ai.koog.agents.memory.model.SingleFact
+import kotlinx.coroutines.runBlocking
 
-   有關錯誤處理的更多詳細資訊，請參閱 [錯誤處理與邊緣情況](#error-handling-and-edge-cases)。
+fun main() {
+    runBlocking {
+        val fact = SingleFact(
+            concept = Concept("preferred-language", "What programming language is preferred by the user?", FactType.SINGLE),
+            value = "Kotlin",
+            timestamp = DefaultTimeProvider.getCurrentTimestamp()
+        )
+        val subject = MemorySubjects.User
+        val scope = MemoryScope.Product("my-app")
+-->
+<!--- SUFFIX
+    }
+}
+-->
+```kotlin
+try {
+    memoryProvider.save(fact, subject, scope)
+} catch (e: Exception) {
+    println("糟糕！無法儲存：${e.message}")
+}
+```
+<!--- KNIT example-agent-memory-14.kt -->
+
+有關錯誤處理的更多詳細資訊，請參閱 [錯誤處理與邊緣情況](#error-handling-and-edge-cases)。
 
 ## 錯誤處理與邊緣情況
 
@@ -512,7 +533,7 @@ class MyCustomMemoryProvider : AgentMemoryProvider {
     }
 }
 ```
-<!--- KNIT example-agent-memory-14.kt -->
+<!--- KNIT example-agent-memory-15.kt -->
 
 ### 從多個主題載入時，事實如何優先排序？
 
@@ -532,6 +553,6 @@ val concept = Concept(
     factType = FactType.MULTIPLE
 )
 ```
-<!--- KNIT example-agent-memory-15.kt -->
+<!--- KNIT example-agent-memory-16.kt -->
 
 這讓您可以為該概念儲存多個值，這些值將作為列表檢索。

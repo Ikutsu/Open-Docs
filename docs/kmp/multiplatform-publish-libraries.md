@@ -18,9 +18,9 @@
 *   使用 GitHub Actions 进行持续集成。
 
 > 即使你使用的是不同的设置，这里的大多数步骤仍然适用，但可能需要考虑一些差异。
-> 
+>
 > 一个[重要限制](multiplatform-publish-lib-setup.md#host-requirements)是 Apple 目标平台必须在 macOS 机器上构建。
-> 
+>
 {style="note"}
 
 ## 示例库
@@ -86,7 +86,7 @@ Maven artifact 通过其[坐标](https://central.sonatype.org/publish/requiremen
 用于管理签名的 `gpg` 工具可在 [GnuPG 网站](https://gnupg.org/download/index.html)上获取。
 你也可以使用 [Homebrew](https://brew.sh/) 等包管理器安装它：
 
-```bash 
+```bash
 brew install gpg
 ```
 
@@ -109,7 +109,7 @@ brew install gpg
         (10) ECC (sign only)
         (14) Existing key from card
     Your selection? 9
-    
+
     Please select which elliptic curve you want:
         (1) Curve 25519 *default*
         (4) NIST P-384
@@ -119,7 +119,7 @@ brew install gpg
 
     > 在撰写本文时，这是 `ECC (签名和加密)`，使用 `Curve 25519`。
     > 较旧的 `gpg` 版本可能默认为 `RSA`，密钥大小为 `3072` 位。
-    > 
+    >
     {style="note"}
 
 3.  当提示指定密钥有效期时，你可以选择不设置过期日期的默认选项。
@@ -135,7 +135,7 @@ brew install gpg
         <n>y = key expires in n years
     Key is valid for? (0) 0
     Key does not expire at all
-    
+
     Is this correct? (y/N) y
     ```
 
@@ -157,9 +157,9 @@ brew install gpg
 
 6.  使用以下命令查看你创建的密钥：
 
-   ```bash
-   gpg --list-keys
-   ```
+    ```bash
+    gpg --list-keys
+    ```
 
 输出将类似于：
 
@@ -196,7 +196,7 @@ gpg --no-armor --export-secret-keys F175482952A225BFC4A07A715EE6B5F76620B385CE >
 此命令将创建一个包含你私钥的 `key.gpg` 二进制文件（请确保**不要**使用 `--armor` 标志，因为它只会创建密钥的纯文本版本）。
 
 > 切勿与任何人分享你的私钥文件 – 只有你才能访问它，因为私钥能让你使用凭据签署文件。
-> 
+>
 {style="warning"}
 
 ## 配置项目
@@ -229,12 +229,12 @@ android {
 // <module directory>/build.gradle.kts
 
 plugins {
-    id("com.vanniktech.maven.publish") version "0.30.0" 
+    id("com.vanniktech.maven.publish") version "%vanniktechPublishPlugin%"
 }
 ```
 
 > 有关插件的最新可用版本，请查看其 [Releases 页面](https://github.com/vanniktech/gradle-maven-publish-plugin/releases)。
-> 
+>
 {style="note"}
 
 在同一文件中，添加以下配置，确保为你的库自定义所有值：
@@ -243,13 +243,13 @@ plugins {
 // <module directory>/build.gradle.kts
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
-    
+    publishToMavenCentral()
+
     signAllPublications()
-    
+
     coordinates(group.toString(), "fibonacci", version.toString())
-    
-    pom { 
+
+    pom {
         name = "Fibonacci library"
         description = "A mathematics calculation library."
         inceptionYear = "2024"
@@ -278,7 +278,7 @@ mavenPublishing {
 ```
 
 > 要配置此项，你还可以使用 [Gradle 属性](https://docs.gradle.org/current/userguide/build_environment.html)。
-> 
+>
 {style="tip"}
 
 这里最重要的设置是：
@@ -381,24 +381,24 @@ jobs:
 3.  在右侧边栏中，点击 **Releases**。
 4.  点击 `Draft a new release` 按钮（如果你以前从未为此版本库创建过发布，则点击 `Create a new release` 按钮）。
 5.  每个发布都有一个标签。在标签下拉菜单中创建一个新标签，并设置发布标题（标签名称和标题可以相同）。
-   
+
    你可能希望它们与你在 `build.gradle.kts` 文件中指定的库版本号相同。
 
    ![在 GitHub 上创建发布](create_release_and_tag.png){width=700}
 
 6.  仔细检查你想要发布的目标分支（尤其如果它不是默认分支），并为你的新版本添加适当的发布说明。
 7.  使用描述下方的复选框将发布标记为预发布版本（对于抢先体验版本如 alpha、beta 或 RC 很有用）。
-   
+
    你也可以将发布标记为最新版本（如果你之前已经为这个版本库创建过发布）。
 8.  点击 **Publish release** 按钮以创建新发布。
 9.  点击你的 GitHub 版本库页面顶部的 **Actions** 选项卡。在这里，你将看到新发布触发了你的发布工作流。
-    
+
    你可以点击工作流查看发布任务的输出。
 10. 工作流运行完成后，导航到 Maven Central 上的[部署](https://central.sonatype.com/publishing/deployments)仪表板。你应该会在这里看到一个新部署。
 
     在 Maven Central 执行检测时，此部署可能会在 _pending_ 或 _validating_ 状态下停留一段时间。
 
-11. 一旦你的部署进入 _validated_ 状态，检查它是否包含你上传的所有 artifact。
+11. 一旦你的部署进入 _validated_ 状态，检测它是否包含你上传的所有 artifact。
     如果一切看起来正确，点击 **Publish** 按钮以发布这些 artifact。
 
     ![发布设置](published_on_maven_central.png){width=700}
